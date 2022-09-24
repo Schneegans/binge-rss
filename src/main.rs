@@ -4,27 +4,20 @@ use gtk::{gdk, gio};
 
 fn main() {
     // Register and include resources
-    gio::resources_register_include!("BingeRSS.gresource").expect("Failed to register resources.");
+    gio::resources_register_include!("BingeRSS.gresource").expect("register resources");
 
     let application = adw::Application::builder()
         .application_id("apps.BingeRSS")
         .build();
+
+    //
     application.connect_startup(|_| {
         adw::init();
-
-        gtk::IconTheme::for_display(&gdk::Display::default().unwrap()).add_resource_path("/");
+        let display = gdk::Display::default().expect("get default gdk::Display");
+        gtk::IconTheme::for_display(&display).add_resource_path("/");
     });
 
     application.connect_activate(|app| {
-        let row = adw::ActionRow::builder()
-            .activatable(true)
-            .selectable(false)
-            .title("Click me")
-            .build();
-        row.connect_activated(|_| {
-            println!("Clicked!");
-        });
-
         let list = gtk::ListBox::builder()
             .margin_top(32)
             .margin_end(32)
@@ -32,7 +25,26 @@ fn main() {
             .margin_start(32)
             .css_classes(vec![String::from("content")])
             .build();
-        list.append(&row);
+
+        //
+        for _i in 0..10 {
+            let row = adw::ActionRow::builder()
+                .activatable(true)
+                .selectable(false)
+                .title("Click me")
+                .build();
+            list.append(&row);
+
+            let subpage = gtk::Label::new(Some("huhuu"));
+
+            row.connect_activated(move |row: &adw::ActionRow| {
+                row.root()
+                    .unwrap()
+                    .downcast_ref::<adw::PreferencesWindow>()
+                    .unwrap()
+                    .present_subpage(&subpage);
+            });
+        }
 
         let group = adw::PreferencesGroup::new();
         group.add(&list);
@@ -52,6 +64,7 @@ fn main() {
             .application(app)
             .title("BingeRSS")
             .default_width(350)
+            .can_navigate_back(true)
             .build();
 
         window.add(&sources_page);
