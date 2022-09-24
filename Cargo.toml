@@ -3,7 +3,9 @@ name = "binge-rss"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+gtk = { version = "0.4.8", package = "gtk4" }
 
 [dependencies]
+gtk = { version = "0.4.8", package = "gtk4" }
 adw = { version = "0.1.1", package = "libadwaita" }
