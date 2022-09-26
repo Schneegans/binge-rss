@@ -1,5 +1,6 @@
-use adw::prelude::*;
+mod sources;
 
+use adw::prelude::*;
 use gtk::{gdk, gio};
 
 fn main() {
@@ -71,6 +72,12 @@ fn main() {
         window.add(&preferences_page);
         window.show();
     });
+
+    let content = sources::get_feed("https://www.spiegel.de/schlagzeilen/tops/index.rss");
+    // let content = sources::get_feed("http://reddit.com/r/unixporn/new/.rss?sort=new");
+
+    
+    println!("{:?}", content);
 
     application.run();
 }
