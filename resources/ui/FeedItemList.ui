@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: MIT
+-->
+
+<interface>
+  <template class="FeedItemList" parent="GtkBox">
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="vexpand">1</property>
+        <property name="hexpand">1</property>
+        <property name="child">
+          <object class="AdwClamp">
+            <property name="child">
+              <object class="AdwPreferencesGroup">
+                <property name="margin_start">32</property>
+                <property name="margin_end">32</property>
+                <property name="margin_top">32</property>
+                <property name="margin_bottom">32</property>
+                <child>
+                  <object class="GtkListBox" id="list">
+                    <style>
+                      <class name="content" />
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </property>
+      </object>
+    </child>
+  </template>
+</interface>

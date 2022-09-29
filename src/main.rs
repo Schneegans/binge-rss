@@ -1,6 +1,8 @@
+mod components;
 mod sources;
 
 use adw::prelude::*;
+use components::FeedItemList;
 use gtk::{gdk, gio};
 
 fn main() {
@@ -15,7 +17,7 @@ fn main() {
   application.connect_startup(|_| {
     adw::init();
     let display = gdk::Display::default().expect("get default gdk::Display");
-    gtk::IconTheme::for_display(&display).add_resource_path("/");
+    gtk::IconTheme::for_display(&display).add_resource_path("/apps/BingeRSS");
   });
 
   let urls = vec![
@@ -91,25 +93,7 @@ fn main() {
       let header = adw::HeaderBar::builder().title_widget(&title).build();
       subpage.append(&header);
 
-      let item_list = gtk::ListBox::builder()
-        .css_classes(vec![String::from("content")])
-        .build();
-
-      let item_group = adw::PreferencesGroup::builder()
-        .margin_top(32)
-        .margin_end(32)
-        .margin_bottom(32)
-        .margin_start(32)
-        .build();
-      item_group.add(&item_list);
-
-      let clamp = adw::Clamp::builder().child(&item_group).build();
-
-      let scrolled_window = gtk::ScrolledWindow::builder()
-        .hscrollbar_policy(gtk::PolicyType::Never)
-        .vexpand(true)
-        .child(&clamp)
-        .build();
+      let item_list = FeedItemList::new();
 
       for item in content.entries {
         let title = if item.title.is_some() {
@@ -118,24 +102,11 @@ fn main() {
           String::from("Foo")
         };
 
-        let row = adw::ActionRow::builder()
-          .activatable(true)
-          .title(&title)
-          .selectable(false)
-          .build();
-        item_list.append(&row);
-
         let url = item.links[0].href.clone();
-
-        row.connect_activated(move |_| {
-          let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
-          if result.is_err() {
-            println!("Failed to open URL {}", url);
-          }
-        });
+        item_list.add_row(title, url);
       }
 
-      subpage.append(&scrolled_window);
+      subpage.append(&item_list);
 
       row.connect_activated(move |row: &adw::ActionRow| {
         row
