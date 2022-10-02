@@ -13,18 +13,51 @@ SPDX-License-Identifier: MIT
         <property name="hexpand">1</property>
         <property name="child">
           <object class="AdwClamp">
+            <property name="margin_start">12</property>
+            <property name="margin_end">12</property>
+            <property name="margin_top">12</property>
+            <property name="margin_bottom">12</property>
             <property name="child">
-              <object class="AdwPreferencesGroup">
-                <property name="margin_start">12</property>
-                <property name="margin_end">12</property>
-                <property name="margin_top">12</property>
-                <property name="margin_bottom">12</property>
-                <property name="title">Recent Items</property>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkListBox" id="list">
-                    <style>
-                      <class name="content" />
-                    </style>
+                  <object class="AdwPreferencesGroup">
+
+                    <property name="title">Filters</property>
+                    <child type="header-suffix">
+                      <object class="GtkButton" id="add_filter_button">
+                        <property name="child">
+                          <object class="AdwButtonContent">
+                            <property name="label">Add Filter</property>
+                            <property name="icon-name">list-add-symbolic</property>
+                          </object>
+                        </property>
+                        <style>
+                          <class name="image-text-button" />
+                          <class name="flat" />
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkListBox" id="filters">
+                        <style>
+                          <class name="content" />
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwPreferencesGroup">
+
+                    <property name="title">Recent Items</property>
+                    <child>
+                      <object class="GtkListBox" id="feed_items">
+                        <style>
+                          <class name="content" />
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

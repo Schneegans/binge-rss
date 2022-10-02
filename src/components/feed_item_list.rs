@@ -13,7 +13,7 @@ mod imp {
   #[template(resource = "/apps/BingeRSS/ui/FeedItemList.ui")]
   pub struct FeedItemList {
     #[template_child]
-    pub list: TemplateChild<gtk::ListBox>,
+    pub feed_items: TemplateChild<gtk::ListBox>,
   }
 
   #[glib::object_subclass]
@@ -55,7 +55,7 @@ impl FeedItemList {
     // Add the vector to the model
     model.extend_from_slice(&items);
 
-    self.imp().list.bind_model(Some(&model), |item| {
+    self.imp().feed_items.bind_model(Some(&model), |item| {
       let title = item.property::<String>("title");
       let url = item.property::<String>("url");
 

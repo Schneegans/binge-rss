@@ -3,6 +3,7 @@
   <gresource prefix="/apps/BingeRSS">
     <file compressed="true">scalable/actions/apps.BingeRSS.settings-symbolic.svg</file>
     <file compressed="true">scalable/actions/apps.BingeRSS.sources-symbolic.svg</file>
+    <file compressed="true">style.css</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/FeedItemList.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/Window.ui</file>
   </gresource>

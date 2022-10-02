@@ -1,0 +1,8 @@
+.item-count-badge {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  font-size: 0.7em;
+  border-radius: 100px;
+  font-weight: bold;
+  padding: 2px 4px;
+}

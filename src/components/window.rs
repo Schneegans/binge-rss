@@ -99,6 +99,17 @@ impl Window {
       }
     }
 
+    {
+      let unread_count = 42;
+      let label = gtk::Label::builder()
+        .label(&unread_count.to_string())
+        .valign(gtk::Align::Center)
+        .css_classes(vec!["item-count-badge".to_string()])
+        .build();
+
+      row.add_suffix(&label);
+    }
+
     let subpage = gtk::ScrolledWindow::builder().build();
 
     let feed_items: Vec<FeedItem> = content
@@ -124,11 +135,20 @@ impl Window {
 
     self.imp().feed_details.add_child(&subpage);
 
-    row.connect_activated(
-      glib::clone!(@weak self as window, @weak item_list => move |_| {
-        window.imp().leaflet.set_visible_child_name("feed_details_page");
-        window.imp().feed_details.set_visible_child(&item_list);
-      }),
-    );
+    row.connect_activated(glib::clone!(@weak self as window => move |_| {
+      window.show_details_page();
+      window.imp().feed_details.set_visible_child(&subpage);
+    }));
+  }
+
+  pub fn show_feed_page(&self) {
+    self.imp().leaflet.set_visible_child_name("feed_list_page");
+  }
+
+  pub fn show_details_page(&self) {
+    self
+      .imp()
+      .leaflet
+      .set_visible_child_name("feed_details_page");
   }
 }

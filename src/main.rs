@@ -67,10 +67,20 @@ fn setup_actions(window: &Window) {
     let actions = gio::SimpleActionGroup::new();
     window.insert_action_group("feeds", Some(&actions));
 
-    let action = gio::SimpleAction::new("add", None);
-    action.connect_activate(move |_, _| {
-      println!("add");
-    });
-    actions.add_action(&action);
+    {
+      let action = gio::SimpleAction::new("add", None);
+      action.connect_activate(move |_, _| {
+        println!("add");
+      });
+      actions.add_action(&action);
+    }
+
+    {
+      let action = gio::SimpleAction::new("show", None);
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        window.show_feed_page();
+      }));
+      actions.add_action(&action);
+    }
   }
 }
