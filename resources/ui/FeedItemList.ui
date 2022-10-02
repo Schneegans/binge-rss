@@ -15,10 +15,11 @@ SPDX-License-Identifier: MIT
           <object class="AdwClamp">
             <property name="child">
               <object class="AdwPreferencesGroup">
-                <property name="margin_start">32</property>
-                <property name="margin_end">32</property>
-                <property name="margin_top">32</property>
-                <property name="margin_bottom">32</property>
+                <property name="margin_start">12</property>
+                <property name="margin_end">12</property>
+                <property name="margin_top">12</property>
+                <property name="margin_bottom">12</property>
+                <property name="title">Recent Items</property>
                 <child>
                   <object class="GtkListBox" id="list">
                     <style>

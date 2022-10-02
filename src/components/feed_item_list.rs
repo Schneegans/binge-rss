@@ -4,6 +4,8 @@ use gtk::gio;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
+use super::FeedItem;
+
 mod imp {
   use super::*;
 
@@ -46,19 +48,64 @@ impl FeedItemList {
     glib::Object::new(&[]).expect("Failed to create FeedItemList")
   }
 
-  pub fn add_row(&self, title: String, url: String) {
-    let row = adw::ActionRow::builder()
-      .activatable(true)
-      .title(&title)
-      .selectable(false)
-      .build();
-    self.imp().list.append(&row);
+  pub fn set_items(&self, items: Vec<FeedItem>) {
+    // Create new model
+    let model = gio::ListStore::new(FeedItem::static_type());
 
-    row.connect_activated(move |_| {
-      let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
-      if result.is_err() {
-        println!("Failed to open URL {}", url);
-      }
+    // Add the vector to the model
+    model.extend_from_slice(&items);
+
+    self.imp().list.bind_model(Some(&model), |item| {
+      let title = item.property::<String>("title");
+      let url = item.property::<String>("url");
+
+      let row = adw::ActionRow::builder()
+        .activatable(true)
+        .title(&title)
+        .selectable(false)
+        .build();
+
+      row.connect_activated(move |_| {
+        let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+        if result.is_err() {
+          println!("Failed to open URL {}", url);
+        }
+      });
+
+      row.upcast::<gtk::Widget>()
     });
+
+    /*
+    let factory = gtk::SignalListItemFactory::new();
+    factory.connect_setup(move |_, list_item| {
+      let label = adw::ActionRow::new();
+      list_item.set_child(Some(&label));
+    });
+
+    factory.connect_bind(move |_, list_item| {
+      // Get `FeedItem` from `ListItem`
+      let feed_item = list_item
+        .item()
+        .expect("The item has to exist.")
+        .downcast::<FeedItem>()
+        .expect("The item has to be a `FeedItem`.");
+
+      let title = feed_item.property::<String>("title");
+
+      // Get `Label` from `ListItem`
+      let label = list_item
+        .child()
+        .expect("The child has to exist.")
+        .downcast::<adw::ActionRow>()
+        .expect("The child has to be a `Label`.");
+
+      // Set "label" to "number"
+      label.set_title(&title.to_string());
+    });
+
+    let selection_model = gtk::SingleSelection::new(Some(&model));
+    self.imp().list.set_model(Some(&selection_model));
+    self.imp().list.set_factory(Some(&factory));
+    */
   }
 }

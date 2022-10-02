@@ -46,6 +46,7 @@ dependencies = [
  "futures",
  "gtk4",
  "libadwaita",
+ "once_cell",
  "reqwest",
  "url",
 ]
