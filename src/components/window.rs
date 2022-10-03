@@ -40,7 +40,24 @@ mod imp {
     }
   }
 
-  impl ObjectImpl for Window {}
+  impl ObjectImpl for Window {
+    fn constructed(&self, obj: &Self::Type) {
+      self.parent_constructed(obj);
+
+      self.feed_list.set_sort_func(|a, b| -> gtk::Ordering {
+        let a = a.downcast_ref::<adw::ActionRow>().unwrap().title();
+        let b = b.downcast_ref::<adw::ActionRow>().unwrap().title();
+
+        if a < b {
+          gtk::Ordering::Smaller
+        } else if a > b {
+          gtk::Ordering::Larger
+        } else {
+          gtk::Ordering::Equal
+        }
+      });
+    }
+  }
 
   impl WidgetImpl for Window {}
 
