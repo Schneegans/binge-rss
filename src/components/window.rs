@@ -1,9 +1,9 @@
+use std::error::Error;
+
 use adw::prelude::*;
 use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
-
-use crate::sources;
 
 use super::{FeedItem, FeedItemList};
 
@@ -61,16 +61,7 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
-  pub fn add_feed(&self, url: &str) {
-    let content = sources::get_feed(url);
-
-    if content.is_err() {
-      return;
-    }
-
-    let content = content.unwrap();
-    let title = &content.title.as_ref().unwrap().content;
-
+  pub fn add_feed(&self, title: &str, url: &str) {
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
@@ -78,66 +69,82 @@ impl Window {
       .build();
     self.imp().feed_list.append(&row);
 
-    {
-      let url = url::Url::parse(&content.links[0].href);
-      let icon_url = url.as_ref().unwrap().scheme().to_string()
-        + &String::from("://")
-        + &url.as_ref().unwrap().host().unwrap().to_string()
-        + &String::from("/favicon.ico");
+    let spinner = gtk::Spinner::new();
+    spinner.start();
+    row.add_prefix(&spinner);
 
-      if icon_url != "" {
-        let image = sources::get_image(&icon_url);
+    let url = url.to_owned();
+    let handle = crate::RUNTIME.spawn(async move {
+      let content = reqwest::get(url).await?.bytes().await?;
+      let feed = feed_rs::parser::parse(&content[..])?;
+      Ok::<feed_rs::model::Feed, Box<dyn Error + Send + Sync>>(feed)
+    });
 
-        if image.is_ok() {
-          row.add_prefix(&image.unwrap());
-        } else {
-          println!(
-            "Failed to download image {:?} (reason: {:?})",
-            &icon_url, &image
-          );
+    let ctx = glib::MainContext::default();
+    ctx.spawn_local(glib::clone!(@weak self as this => async move {
+        let content = handle.await.unwrap().unwrap();
+
+        // if false {
+        //   let url = url::Url::parse(&content.links[0].href);
+        //   let icon_url = url.as_ref().unwrap().scheme().to_string()
+        //     + &String::from("://")
+        //     + &url.as_ref().unwrap().host().unwrap().to_string()
+        //     + &String::from("/favicon.ico");
+
+        //   if icon_url != "" {
+        //     let image = sources::get_image(&icon_url);
+
+        //     if image.is_ok() {
+        //       row.add_prefix(&image.unwrap());
+        //     } else {
+        //       println!(
+        //         "Failed to download image {:?} (reason: {:?})",
+        //         &icon_url, &image
+        //       );
+        //     }
+        //   }
+        // }
+
+        {
+          let unread_count = 42;
+          let label = gtk::Label::builder()
+            .label(&unread_count.to_string())
+            .valign(gtk::Align::Center)
+            .css_classes(vec!["item-count-badge".to_string()])
+            .build();
+
+          row.add_suffix(&label);
         }
-      }
-    }
 
-    {
-      let unread_count = 42;
-      let label = gtk::Label::builder()
-        .label(&unread_count.to_string())
-        .valign(gtk::Align::Center)
-        .css_classes(vec!["item-count-badge".to_string()])
-        .build();
+        let subpage = gtk::ScrolledWindow::builder().build();
 
-      row.add_suffix(&label);
-    }
+        let feed_items: Vec<FeedItem> = content
+          .entries
+          .iter()
+          .map(|item| {
+            let title = if item.title.is_some() {
+              item.title.as_ref().unwrap().content.clone()
+            } else {
+              String::from("Foo")
+            };
 
-    let subpage = gtk::ScrolledWindow::builder().build();
+            let url = item.links[0].href.clone();
 
-    let feed_items: Vec<FeedItem> = content
-      .entries
-      .iter()
-      .map(|item| {
-        let title = if item.title.is_some() {
-          item.title.as_ref().unwrap().content.clone()
-        } else {
-          String::from("Foo")
-        };
+            FeedItem::new(title, url)
+          })
+          .collect();
 
-        let url = item.links[0].href.clone();
+        let item_list = FeedItemList::new();
+        item_list.set_items(feed_items);
 
-        FeedItem::new(title, url)
-      })
-      .collect();
+        subpage.set_child(Some(&item_list));
 
-    let item_list = FeedItemList::new();
-    item_list.set_items(feed_items);
+        this.imp().feed_details.add_child(&subpage);
 
-    subpage.set_child(Some(&item_list));
-
-    self.imp().feed_details.add_child(&subpage);
-
-    row.connect_activated(glib::clone!(@weak self as window => move |_| {
-      window.show_details_page();
-      window.imp().feed_details.set_visible_child(&subpage);
+        row.connect_activated( move |_| {
+          this.show_details_page();
+          this.imp().feed_details.set_visible_child(&subpage);
+        });
     }));
   }
 

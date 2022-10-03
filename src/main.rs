@@ -5,6 +5,10 @@ use adw::prelude::*;
 use components::Window;
 use gtk::glib;
 use gtk::{gdk, gio};
+use once_cell::sync::Lazy;
+
+pub static RUNTIME: Lazy<tokio::runtime::Runtime> =
+  Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 fn main() {
   // Register and include resources
@@ -31,11 +35,14 @@ fn main() {
 
     setup_actions(&window);
 
-    window.add_feed("https://www.spiegel.de/schlagzeilen/tops/index.rss");
-    window.add_feed("http://reddit.com/r/unixporn/new/.rss?sort=new");
-    // window.add_feed("https://omgubuntu.co.uk/feed");
-    // window.add_feed("https://www.blendernation.com/feed/");
-    // window.add_feed("https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml");
+    window.add_feed(
+      "Der SPIEGEL",
+      "https://www.spiegel.de/schlagzeilen/tops/index.rss",
+    );
+    window.add_feed("Unixporn", "http://reddit.com/r/unixporn/new/.rss?sort=new");
+    window.add_feed("OMG Ubuntu", "https://omgubuntu.co.uk/feed");
+    window.add_feed("Blendernation", "https://www.blendernation.com/feed/");
+    // window.add_feed("", "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml");
   });
 
   application.run();

@@ -2,12 +2,6 @@ use gtk::{gdk, gio, glib};
 
 use std::error::Error;
 
-pub fn get_feed(url: &str) -> Result<feed_rs::model::Feed, Box<dyn Error>> {
-  let content = reqwest::blocking::get(url)?.bytes()?;
-  let feed = feed_rs::parser::parse(&content[..])?;
-  Ok(feed)
-}
-
 pub fn get_image(url: &str) -> Result<gtk::Image, Box<dyn Error>> {
   let content = reqwest::blocking::get(url)?.bytes()?;
   let bytes = glib::Bytes::from(&content.to_vec());
