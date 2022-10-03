@@ -39,6 +39,10 @@ fn main() {
       "https://www.spiegel.de/schlagzeilen/tops/index.rss",
     );
     window.add_feed("Unixporn", "http://reddit.com/r/unixporn/new/.rss?sort=new");
+    window.add_feed(
+      "Forschung Aktuell",
+      "https://www.deutschlandfunk.de/forschung-aktuell-104.xml",
+    );
     window.add_feed("Linux", "http://reddit.com/r/linux/new/.rss?sort=new");
     window.add_feed("GNOME", "http://reddit.com/r/gnome/new/.rss?sort=new");
     window.add_feed("OMG Ubuntu", "https://omgubuntu.co.uk/feed");
