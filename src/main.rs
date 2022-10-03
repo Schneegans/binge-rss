@@ -1,5 +1,4 @@
 mod components;
-mod sources;
 
 use adw::prelude::*;
 use components::Window;
@@ -40,9 +39,20 @@ fn main() {
       "https://www.spiegel.de/schlagzeilen/tops/index.rss",
     );
     window.add_feed("Unixporn", "http://reddit.com/r/unixporn/new/.rss?sort=new");
+    window.add_feed("Linux", "http://reddit.com/r/linux/new/.rss?sort=new");
+    window.add_feed("GNOME", "http://reddit.com/r/gnome/new/.rss?sort=new");
     window.add_feed("OMG Ubuntu", "https://omgubuntu.co.uk/feed");
     window.add_feed("Blendernation", "https://www.blendernation.com/feed/");
-    // window.add_feed("", "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml");
+    window.add_feed("The Verge", "https://www.theverge.com/rss/index.xml");
+    window.add_feed(
+      "Ars Technica",
+      "https://feeds.arstechnica.com/arstechnica/features",
+    );
+    window.add_feed("Hacker News", "https://news.ycombinator.com/rss");
+    //   window.add_feed(
+    //     "Vulnerabilities",
+    //     "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml",
+    //   );
   });
 
   application.run();
@@ -78,6 +88,14 @@ fn setup_actions(window: &Window) {
       let action = gio::SimpleAction::new("add", None);
       action.connect_activate(move |_, _| {
         println!("add");
+      });
+      actions.add_action(&action);
+    }
+
+    {
+      let action = gio::SimpleAction::new("remove", None);
+      action.connect_activate(move |_, _| {
+        println!("remove");
       });
       actions.add_action(&action);
     }

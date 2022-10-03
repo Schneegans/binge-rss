@@ -1,5 +1,5 @@
-mod feed_item;
-mod feed_item_list;
+mod feed;
+mod feed_content_page;
 mod window;
 
-pub use self::{feed_item::FeedItem, feed_item_list::FeedItemList, window::Window};
+pub use self::{feed::Feed, feed::FeedItem, feed_content_page::FeedContentPage, window::Window};

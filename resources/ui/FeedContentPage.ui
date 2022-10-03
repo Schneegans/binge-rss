@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 -->
 
 <interface>
-  <template class="FeedItemList" parent="GtkBox">
+  <template class="FeedContentPage" parent="GtkBox">
     <child>
       <object class="GtkScrolledWindow">
         <property name="vexpand">1</property>

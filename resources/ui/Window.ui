@@ -9,6 +9,10 @@ SPDX-License-Identifier: MIT
   <menu id="main-menu">
     <section>
       <item>
+        <attribute name="label" translatable="yes">Refresh All</attribute>
+        <attribute name="action">app.refresh</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
       </item>
@@ -45,13 +49,16 @@ SPDX-License-Identifier: MIT
                     </binding>
 
                     <child type="title">
-                      <object class="GtkLabel"></object>
+                      <object class="GtkLabel">
+                        <!-- <property name="label">Feeds</property> -->
+                      </object>
                     </child>
 
                     <child type="start">
                       <object class="GtkButton" id="add_button">
                         <property name="icon-name">list-add-symbolic</property>
                         <property name="action-name">feeds.add</property>
+                        <property name="tooltip-text">Add a new feed</property>
                       </object>
                     </child>
 
@@ -96,6 +103,7 @@ SPDX-License-Identifier: MIT
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="AdwHeaderBar">
+
                     <child type="start">
                       <object class="GtkButton">
                         <property name="icon-name">go-previous-symbolic</property>
@@ -105,6 +113,15 @@ SPDX-License-Identifier: MIT
                         </binding>
                       </object>
                     </child>
+
+                    <child type="end">
+                      <object class="GtkButton" id="remove_button">
+                        <property name="icon-name">user-trash-symbolic</property>
+                        <property name="action-name">feeds.remove</property>
+                        <property name="tooltip-text">Remove this feed</property>
+                      </object>
+                    </child>
+
                   </object>
                 </child>
                 <child>
