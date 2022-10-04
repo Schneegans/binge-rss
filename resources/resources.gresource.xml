@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/apps/BingeRSS">
-    <file compressed="true">scalable/actions/apps.BingeRSS.settings-symbolic.svg</file>
-    <file compressed="true">scalable/actions/apps.BingeRSS.sources-symbolic.svg</file>
+  <gresource prefix="/io/github/schneegans/BingeRSS">
+    <file compressed="true">scalable/apps/io.github.schneegans.BingeRSS.svg</file>
     <file compressed="true">style.css</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/FeedContentPage.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/Window.ui</file>
