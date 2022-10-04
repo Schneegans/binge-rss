@@ -10,7 +10,7 @@ mod imp {
   use super::*;
 
   #[derive(Debug, CompositeTemplate, Default)]
-  #[template(resource = "/apps/BingeRSS/ui/FeedContentPage.ui")]
+  #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
   pub struct FeedContentPage {
     #[template_child]
     pub feed_items: TemplateChild<gtk::ListBox>,

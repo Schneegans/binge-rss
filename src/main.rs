@@ -21,7 +21,7 @@ fn main() {
   application.connect_startup(|_| {
     adw::init();
     let display = gdk::Display::default().expect("get default gdk::Display");
-    gtk::IconTheme::for_display(&display).add_resource_path("/apps/BingeRSS");
+    gtk::IconTheme::for_display(&display).add_resource_path("/io/github/schneegans/BingeRSS");
   });
 
   application.connect_activate(move |app| {
