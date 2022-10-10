@@ -29,7 +29,6 @@ fn main() {
     window.set_application(Some(app));
     window.set_title(Some(&"BingeRSS".to_string()));
 
-    window.add_css_class("devel");
     window.show();
 
     setup_actions(&window);
@@ -69,9 +68,22 @@ fn setup_actions(window: &Window) {
 
     {
       let action = gio::SimpleAction::new("about", None);
-      action.connect_activate(move |_, _| {
-        println!("about");
-      });
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        let dialog = gtk::AboutDialog::builder()
+          .program_name("BingeRSS")
+          .license_type(gtk::License::MitX11)
+          .logo_icon_name("io.github.schneegans.BingeRSS")
+          .authors(vec!["Simon Schneegans".into()])
+          .artists(vec!["Simon Schneegans".into()])
+          .website("https://github.com/schneegans/binge-rss")
+          .version("0.1.0")
+          .transient_for(&window)
+          .modal(true)
+          .build();
+
+        dialog.present();
+      }));
+
       actions.add_action(&action);
     }
 
