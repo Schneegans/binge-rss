@@ -1,9 +1,9 @@
 use gtk::gio;
 
 fn main() {
-    gio::compile_resources(
-        "resources",
-        "resources/resources.gresource.xml",
-        "BingeRSS.gresource",
-    );
+  gio::compile_resources(
+    "data/resources",
+    "data/resources/resources.gresource.xml",
+    "compiled.gresource",
+  );
 }

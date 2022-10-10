@@ -23,7 +23,7 @@ mod imp {
     pub add_button: TemplateChild<gtk::Button>,
     #[template_child]
     pub feed_details: TemplateChild<gtk::Stack>,
-    // pub settings: gio::Settings,
+    pub settings: gio::Settings,
   }
 
   impl Default for Window {
@@ -33,7 +33,7 @@ mod imp {
         feed_list: TemplateChild::default(),
         add_button: TemplateChild::default(),
         feed_details: TemplateChild::default(),
-        // settings: gio::Settings::new("de.schneegans.BingeRSS"),
+        settings: gio::Settings::new("io.github.schneegans.BingeRSS"),
       }
     }
   }
@@ -217,31 +217,31 @@ impl Window {
   }
 
   fn save_window_size(&self) -> Result<(), glib::BoolError> {
-    // let imp = self.imp();
+    let imp = self.imp();
 
-    // let (width, height) = self.default_size();
+    let (width, height) = self.default_size();
 
-    // imp.settings.set_int("window-width", width)?;
-    // imp.settings.set_int("window-height", height)?;
+    imp.settings.set_int("window-width", width)?;
+    imp.settings.set_int("window-height", height)?;
 
-    // imp
-    //   .settings
-    //   .set_boolean("is-maximized", self.is_maximized())?;
+    imp
+      .settings
+      .set_boolean("is-maximized", self.is_maximized())?;
 
     Ok(())
   }
 
   fn load_window_size(&self) {
-    // let imp = self.imp();
+    let imp = self.imp();
 
-    // let width = imp.settings.int("window-width");
-    // let height = imp.settings.int("window-height");
-    // let is_maximized = imp.settings.boolean("is-maximized");
+    let width = imp.settings.int("window-width");
+    let height = imp.settings.int("window-height");
+    let is_maximized = imp.settings.boolean("is-maximized");
 
-    // self.set_default_size(width, height);
+    self.set_default_size(width, height);
 
-    // if is_maximized {
-    //   self.maximize();
-    // }
+    if is_maximized {
+      self.maximize();
+    }
   }
 }

@@ -40,6 +40,11 @@ SPDX-License-Identifier: MIT
                     </child>
                     <child>
                       <object class="GtkListBox" id="filters">
+                        <!-- <child>
+                          <object class="AdwEntryRow">
+                            <property name="title">Name Contains</property>
+                          </object>
+                        </child> -->
                         <style>
                           <class name="content" />
                         </style>

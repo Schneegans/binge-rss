@@ -11,13 +11,13 @@ pub static RUNTIME: Lazy<tokio::runtime::Runtime> =
 
 fn main() {
   // Register and include resources
-  gio::resources_register_include!("BingeRSS.gresource").expect("register resources");
+  gio::resources_register_include!("compiled.gresource").expect("register resources");
 
   let application = adw::Application::builder()
     .application_id("apps.BingeRSS")
     .build();
 
-  //
+  // asdsas
   application.connect_startup(|_| {
     adw::init();
     let display = gdk::Display::default().expect("get default gdk::Display");
