@@ -14,7 +14,7 @@ fn main() {
   gio::resources_register_include!("compiled.gresource").expect("register resources");
 
   let application = adw::Application::builder()
-    .application_id("apps.BingeRSS")
+    .application_id("io.github.schneegans.BingeRSS")
     .build();
 
   // asdsas
