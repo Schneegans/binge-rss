@@ -102,12 +102,12 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
-  pub fn add_feed(&self, title: &str, url: &str) {
+  pub fn add_feed(&self, title: String, url: String) {
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
       .sensitive(false)
-      .title(title)
+      .title(title.as_str())
       .build();
     self.imp().feed_list.append(&row);
 
@@ -115,7 +115,6 @@ impl Window {
     spinner.start();
     row.add_prefix(&spinner);
 
-    let url = url.to_owned();
     let handle = crate::RUNTIME.spawn(async move {
       let bytes = reqwest::get(url).await?.bytes().await?;
       let content = feed_rs::parser::parse(&bytes[..])?;

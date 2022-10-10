@@ -1,6 +1,7 @@
 mod components;
 
 use adw::prelude::*;
+use components::FeedSettings;
 use components::Window;
 use gtk::glib;
 use gtk::{gdk, gio};
@@ -33,29 +34,63 @@ fn main() {
 
     setup_actions(&window);
 
-    window.add_feed(
-      "Der SPIEGEL",
-      "https://www.spiegel.de/schlagzeilen/tops/index.rss",
-    );
-    window.add_feed("Unixporn", "http://reddit.com/r/unixporn/new/.rss?sort=new");
-    window.add_feed(
-      "Forschung Aktuell",
-      "https://www.deutschlandfunk.de/forschung-aktuell-104.xml",
-    );
-    window.add_feed("Linux", "http://reddit.com/r/linux/new/.rss?sort=new");
-    window.add_feed("GNOME", "http://reddit.com/r/gnome/new/.rss?sort=new");
-    window.add_feed("OMG Ubuntu", "https://omgubuntu.co.uk/feed");
-    window.add_feed("Blendernation", "https://www.blendernation.com/feed/");
-    window.add_feed("The Verge", "https://www.theverge.com/rss/index.xml");
-    window.add_feed(
-      "Ars Technica",
-      "https://feeds.arstechnica.com/arstechnica/features",
-    );
-    window.add_feed("Hacker News", "https://news.ycombinator.com/rss");
-    //   window.add_feed(
-    //     "Vulnerabilities",
-    //     "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml",
-    //   );
+    let data = r#"
+      [
+        {
+          "title": "Der SPIEGEL",
+          "url": "https://www.spiegel.de/schlagzeilen/tops/index.rss"
+        },
+        {
+          "title": "Unixporn",
+          "url": "http://reddit.com/r/unixporn/new/.rss?sort=new"
+        },
+        {
+          "title": "Forschung Aktuell",
+          "url": "https://www.deutschlandfunk.de/forschung-aktuell-104.xml"
+        },
+        {
+          "title": "Linux",
+          "url": "http://reddit.com/r/linux/new/.rss?sort=new"
+        },
+        {
+          "title": "GNOME",
+          "url": "http://reddit.com/r/gnome/new/.rss?sort=new"
+        },
+        {
+          "title": "OMG Ubuntu",
+          "url": "https://omgubuntu.co.uk/feed"
+        },
+        {
+          "title": "Blendernation",
+          "url": "https://www.blendernation.com/feed/"
+        },
+        {
+          "title": "The Verge",
+          "url": "https://www.theverge.com/rss/index.xml"
+        },
+        {
+          "title": "Ars Technica",
+          "url": "https://feeds.arstechnica.com/arstechnica/features"
+        },
+        {
+          "title": "Hacker News",
+          "url": "https://news.ycombinator.com/rss"
+        }
+      ]"#;
+
+    // {
+    //   "name": "Vulnerabilities",
+    //   "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml"
+    // }
+
+    // Parse the string of data into a Person object. This is exactly the
+    // same function as the one that produced serde_json::Value above, but
+    // now we are asking it for a Person as output.
+    let feeds: Vec<FeedSettings> = serde_json::from_str(data).expect("valid json");
+
+    for feed in feeds {
+      window.add_feed(feed.title, feed.url);
+    }
   });
 
   application.run();
