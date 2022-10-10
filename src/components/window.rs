@@ -175,7 +175,7 @@ impl Window {
       }
 
       {
-        let unread_count = 42;
+        let unread_count = 43;
         let label = gtk::Label::builder()
           .label(&unread_count.to_string())
           .valign(gtk::Align::Center)
