@@ -52,7 +52,7 @@ impl FeedContentPage {
     for item in items {
       let row = adw::ActionRow::builder()
         .activatable(true)
-        .title(&item.title)
+        .title(&glib::markup_escape_text(&item.title))
         .title_lines(1)
         .selectable(false)
         .build();
