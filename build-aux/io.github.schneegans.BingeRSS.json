@@ -11,7 +11,8 @@
     "finish-args": [
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--device=dri"
+        "--device=dri",
+        "--share=network"
     ],
     "build-options": {
         "append-path": "/usr/lib/sdk/rust-stable/bin"
