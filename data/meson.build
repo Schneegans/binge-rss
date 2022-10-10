@@ -4,6 +4,11 @@ install_data(
 )
 
 install_data(
+  'io.github.schneegans.BingeRSS.metainfo.xml',
+  install_dir: datadir / 'metainfo'
+)
+
+install_data(
   'io.github.schneegans.BingeRSS.desktop',
   install_dir: datadir / 'applications'
 )

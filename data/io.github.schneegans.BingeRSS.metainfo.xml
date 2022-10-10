@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>io.github.schneegans.BingeRSS</id>
+    <metadata_license>CC0</metadata_license>
+    <project_license>MIT</project_license>
+    <name>BingeRSS</name>
+    <summary>Minimalistice RSS reader for filtered, high-volume news feeds</summary>
+    <description>
+        <p>The app shows desktop notifactions whenever a news feed provides a new item.</p>
+    </description>
+    <screenshots>
+        <screenshot type="default">
+            <image>https://github.com/schneegans/binge-rss/raw/main/data/screenshots/screenshot01.png</image>
+            <caption>Main window</caption>
+        </screenshot>
+    </screenshots>
+    <url type="homepage">https://github.com/schneegans/binge-rss</url>
+    <url type="bugtracker">https://github.com/schneegans/binge-rss/issues</url>
+    <!-- <url type="donation">https://www.gnome.org/donate/</url> -->
+    <!-- <url type="translate">https://l10n.gnome.org/module/fractal/</url> -->
+
+    <content_rating type="oars-1.0" />
+    <releases>
+        <release version="0.1.0" date="2019-07-11" />
+    </releases>
+    <kudos>
+        <!--
+        GNOME Software kudos:
+        https://gitlab.gnome.org/GNOME/gnome-software/-/blob/main/doc/kudos.md
+        -->
+        <kudo>ModernToolkit</kudo>
+        <kudo>HiDpiIcon</kudo>
+        <kudo>Notifications</kudo>
+    </kudos>
+    <developer_name>Simon Schneegans</developer_name>
+    <!-- <translation type="gettext">@gettext-package@</translation> -->
+    <launchable type="desktop-id">io.github.schneegans.BingeRSS.desktop</launchable>
+</component>

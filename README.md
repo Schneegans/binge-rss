@@ -1,6 +1,6 @@
 # BingeRSS
 
-A minimalistice RSS reader for filtered, high-volume news feeds
+Minimalistice RSS reader for filtered, high-volume news feeds
 
 ## Local
 

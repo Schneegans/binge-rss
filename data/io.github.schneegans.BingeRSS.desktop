@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=BingeRSS
-Comment=Write a GTK + Rust application
+Comment=Minimalistice RSS reader for filtered, high-volume news feeds
 Type=Application
 Exec=binge-rss
 Terminal=false
