@@ -21,6 +21,9 @@
         {
             "name": "binge-rss",
             "buildsystem": "meson",
+            "config-opts": [
+                "--buildtype=release"
+            ],
             "sources": [
                 {
                     "type": "archive",
