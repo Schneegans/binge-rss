@@ -26,8 +26,8 @@ cargo_build = custom_target(
     'env',
     cargo_env,
     cargo, 'build',
-    cargo_options
-    # '&&',
-    # 'cp', 'src' / rust_target / meson.project_name(), '@OUTPUT@',
+    cargo_options,
+    '&&',
+    'cp', 'src' / rust_target / meson.project_name(), '@OUTPUT@',
   ]
 )
