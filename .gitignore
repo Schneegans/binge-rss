@@ -1,4 +1,6 @@
 /.vscode
+/.flatpak-builder
 /_build
 /_install
+/_repo
 /target

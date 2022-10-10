@@ -1,0 +1,31 @@
+{
+    "id": "io.github.schneegans.BingeRSS",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "42",
+    "sdk": "org.gnome.Sdk",
+    "sdk-extensions": [
+        "org.freedesktop.Sdk.Extension.rust-stable",
+        "org.freedesktop.Sdk.Extension.llvm14"
+    ],
+    "command": "binge-rss",
+    "finish-args": [
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--device=dri"
+    ],
+    "build-options": {
+        "append-path": "/usr/lib/sdk/rust-stable/bin"
+    },
+    "modules": [
+        {
+            "name": "binge-rss",
+            "buildsystem": "meson",
+            "sources": [
+                {
+                    "type": "archive",
+                    "path": "../_build/release/meson-dist/binge-rss-0.1.0.tar.xz"
+                }
+            ]
+        }
+    ]
+}
