@@ -1,7 +1,7 @@
 mod components;
 
 use adw::prelude::*;
-use components::FeedSettings;
+use components::Feed;
 use components::Window;
 use gtk::glib;
 use gtk::{gdk, gio};
@@ -38,58 +38,65 @@ fn main() {
       [
         {
           "title": "Der SPIEGEL",
-          "url": "https://www.spiegel.de/schlagzeilen/tops/index.rss"
+          "url": "https://www.spiegel.de/schlagzeilen/tops/index.rss",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Unixporn",
-          "url": "http://reddit.com/r/unixporn/new/.rss?sort=new"
+          "url": "http://reddit.com/r/unixporn/new/.rss?sort=new",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Forschung Aktuell",
-          "url": "https://www.deutschlandfunk.de/forschung-aktuell-104.xml"
+          "url": "https://www.deutschlandfunk.de/forschung-aktuell-104.xml",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Linux",
-          "url": "http://reddit.com/r/linux/new/.rss?sort=new"
+          "url": "http://reddit.com/r/linux/new/.rss?sort=new",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "GNOME",
-          "url": "http://reddit.com/r/gnome/new/.rss?sort=new"
+          "url": "http://reddit.com/r/gnome/new/.rss?sort=new",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "OMG Ubuntu",
-          "url": "https://omgubuntu.co.uk/feed"
+          "url": "https://omgubuntu.co.uk/feed",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Blendernation",
-          "url": "https://www.blendernation.com/feed/"
+          "url": "https://www.blendernation.com/feed/",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "The Verge",
-          "url": "https://www.theverge.com/rss/index.xml"
+          "url": "https://www.theverge.com/rss/index.xml",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Ars Technica",
-          "url": "https://feeds.arstechnica.com/arstechnica/features"
+          "url": "https://feeds.arstechnica.com/arstechnica/features",
+          "viewed": "2022-10-09 16:06:14 UTC"
         },
         {
           "title": "Hacker News",
-          "url": "https://news.ycombinator.com/rss"
+          "url": "https://news.ycombinator.com/rss",
+          "viewed": "2022-10-09 16:06:14 UTC"
+        },
+        {
+          "title": "Vulnerabilities",
+          "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml",
+          "viewed": "2022-10-09 16:06:14 UTC"
         }
       ]"#;
 
-    // {
-    //   "name": "Vulnerabilities",
-    //   "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml"
-    // }
-
-    // Parse the string of data into a Person object. This is exactly the
-    // same function as the one that produced serde_json::Value above, but
-    // now we are asking it for a Person as output.
-    let feeds: Vec<FeedSettings> = serde_json::from_str(data).expect("valid json");
+    let feeds: Vec<Feed> = serde_json::from_str(data).expect("valid json");
 
     for feed in feeds {
-      window.add_feed(feed.title, feed.url);
+      window.add_feed(feed);
     }
   });
 
