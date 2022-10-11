@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: MIT
+-->
+
 <gresources>
   <gresource prefix="/io/github/schneegans/BingeRSS">
     <file compressed="true">style.css</file>

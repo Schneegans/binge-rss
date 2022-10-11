@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # BingeRSS
 
 A mimalistic RSS reader for fast, filtered, high-volume news feeds.

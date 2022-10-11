@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: MIT
+-->
+
 <schemalist>
     <schema path="/io/github/schneegans/BingeRSS/" id="io.github.schneegans.BingeRSS">
         <key name="window-width" type="i">

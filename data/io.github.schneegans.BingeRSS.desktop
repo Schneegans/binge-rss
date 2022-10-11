@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+# SPDX-License-Identifier: CC0-1.0
+
 [Desktop Entry]
 Name=BingeRSS
 Comment=Minimalistice RSS reader for filtered, high-volume news feeds

@@ -1,3 +1,8 @@
+/* 
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: CC0-1.0
+*/
+
 .item-count-badge {
   background-color: @accent_bg_color;
   color: @accent_fg_color;
