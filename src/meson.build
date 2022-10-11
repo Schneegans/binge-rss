@@ -1,3 +1,30 @@
+##########################################################################################
+#                            ___ _               ___  ___ ___                            #
+#                           | _ |_)_ _  __ _ ___| _ \/ __/ __|                           #
+#                           | _ \ | ' \/ _` / -_)   /\__ \__ \                           #
+#                           |___/_|_||_\__, \___|_|_\|___/___/                           #
+#                                      |___/                                             #
+##########################################################################################
+
+# SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+# SPDX-License-Identifier: MIT
+
+global_conf = configuration_data()
+global_conf.set_quoted('APP_ID', app_id)
+global_conf.set_quoted('VERSION', version )
+config = configure_file(
+  input: 'config.rs.in',
+  output: 'config.rs',
+  configuration: global_conf
+)
+run_command(
+  'cp',
+  meson.project_build_root() / 'src' / 'config.rs',
+  meson.project_source_root() / 'src' / 'config.rs',
+  check: true
+)
+
+
 cargo_options = [ '--manifest-path', meson.project_source_root() / 'Cargo.toml' ]
 cargo_options += [ '--target-dir', meson.project_build_root() / 'src' ]
 

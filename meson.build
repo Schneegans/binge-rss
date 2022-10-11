@@ -1,3 +1,14 @@
+##########################################################################################
+#                            ___ _               ___  ___ ___                            #
+#                           | _ |_)_ _  __ _ ___| _ \/ __/ __|                           #
+#                           | _ \ | ' \/ _` / -_)   /\__ \__ \                           #
+#                           |___/_|_||_\__, \___|_|_\|___/___/                           #
+#                                      |___/                                             #
+##########################################################################################
+
+# SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+# SPDX-License-Identifier: MIT
+
 project(
   'binge-rss',
   'rust',
@@ -8,7 +19,7 @@ project(
 
 gnome = import('gnome')
 
-base_id = 'io.github.schneegans.BingeRSS'
+app_id = 'io.github.schneegans.BingeRSS'
 
 dependency('glib-2.0', version: '>= 2.66')
 dependency('gio-2.0', version: '>= 2.66')

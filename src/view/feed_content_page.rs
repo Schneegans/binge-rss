@@ -1,10 +1,21 @@
+//////////////////////////////////////////////////////////////////////////////////////////
+//                           ___ _               ___  ___ ___                           //
+//                          | _ |_)_ _  __ _ ___| _ \/ __/ __|                          //
+//                          | _ \ | ' \/ _` / -_)   /\__ \__ \                          //
+//                          |___/_|_||_\__, \___|_|_\|___/___/                          //
+//                                     |___/                                            //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+// SPDX-License-Identifier: MIT
+
 use adw::prelude::*;
 use glib::subclass::InitializingObject;
 use gtk::gio;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
-use super::FeedItem;
+use crate::model::FeedItem;
 
 mod imp {
   use super::*;

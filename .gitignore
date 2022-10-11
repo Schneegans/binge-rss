@@ -4,3 +4,4 @@
 /_install
 /_repo
 /target
+/src/config.rs

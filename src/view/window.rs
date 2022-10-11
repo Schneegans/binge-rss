@@ -1,3 +1,14 @@
+//////////////////////////////////////////////////////////////////////////////////////////
+//                           ___ _               ___  ___ ___                           //
+//                          | _ |_)_ _  __ _ ___| _ \/ __/ __|                          //
+//                          | _ \ | ' \/ _` / -_)   /\__ \__ \                          //
+//                          |___/_|_||_\__, \___|_|_\|___/___/                          //
+//                                     |___/                                            //
+//////////////////////////////////////////////////////////////////////////////////////////
+
+// SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+// SPDX-License-Identifier: MIT
+
 use std::error::Error;
 
 use adw::prelude::*;
@@ -5,7 +16,8 @@ use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, glib, CompositeTemplate};
 
-use super::{Feed, FeedContentPage, FeedItem};
+use crate::model::{Feed, FeedItem};
+use crate::view::FeedContentPage;
 
 mod imp {
   use adw::subclass::prelude::AdwApplicationWindowImpl;
