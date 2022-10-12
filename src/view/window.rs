@@ -16,7 +16,7 @@ use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, glib, CompositeTemplate};
 
-use crate::model::{Feed, FeedItem};
+use crate::model::{FeedData, FeedItemData};
 use crate::view::FeedContentPage;
 
 mod imp {
@@ -114,12 +114,12 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
-  pub fn add_feed(&self, mut feed: Feed) {
+  pub fn add_feed(&self, title: String, url: String) {
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
       .sensitive(false)
-      .title(feed.title.as_str())
+      .title(title.as_str())
       .build();
     self.imp().feed_list.append(&row);
 
@@ -128,10 +128,15 @@ impl Window {
     row.add_prefix(&spinner);
 
     let handle = crate::RUNTIME.spawn(async move {
-      let bytes = reqwest::get(&feed.url).await?.bytes().await?;
+      let bytes = reqwest::get(&url).await?.bytes().await?;
       let content = feed_rs::parser::parse(&bytes[..])?;
 
-      feed.items = content
+      let mut data = FeedData {
+        items: vec![],
+        image: None,
+      };
+
+      data.items = content
         .entries
         .iter()
         .map(|item| {
@@ -149,11 +154,10 @@ impl Window {
             String::from("")
           };
 
-          FeedItem {
+          FeedItemData {
             title: title,
             url: url,
             summary: summary,
-            content: String::new(),
           }
         })
         .collect();
@@ -165,9 +169,9 @@ impl Window {
         + &String::from("/favicon.ico");
 
       let bytes = reqwest::get(icon_url).await?.bytes().await?;
-      feed.image = Some(glib::Bytes::from(&bytes.to_vec()));
+      data.image = Some(glib::Bytes::from(&bytes.to_vec()));
 
-      Ok::<Feed, Box<dyn Error + Send + Sync>>(feed)
+      Ok::<FeedData, Box<dyn Error + Send + Sync>>(data)
     });
 
     let ctx = glib::MainContext::default();

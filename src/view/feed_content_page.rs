@@ -15,7 +15,7 @@ use gtk::gio;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate};
 
-use crate::model::FeedItem;
+use crate::model::FeedItemData;
 
 mod imp {
   use super::*;
@@ -59,7 +59,7 @@ impl FeedContentPage {
     glib::Object::new(&[]).expect("Failed to create FeedContentPage")
   }
 
-  pub fn set_items(&self, items: Vec<FeedItem>) {
+  pub fn set_items(&self, items: Vec<FeedItemData>) {
     for item in items {
       let row = adw::ActionRow::builder()
         .activatable(true)

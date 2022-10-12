@@ -13,12 +13,14 @@ use adw::prelude::*;
 use gio::Settings;
 use glib::WeakRef;
 use gtk::{gio, glib, subclass::prelude::*};
+use std::cell::RefCell;
 
 use crate::config;
-use crate::model::Feed;
+use crate::model::FeedSettings;
 use crate::view::Window;
 
 mod imp {
+
   use adw::subclass::prelude::AdwApplicationImpl;
 
   use super::*;
@@ -27,6 +29,7 @@ mod imp {
   pub struct Application {
     pub window: WeakRef<Window>,
     pub settings: Settings,
+    pub feeds: RefCell<Vec<FeedSettings>>,
   }
 
   impl Default for Application {
@@ -34,6 +37,7 @@ mod imp {
       Self {
         window: Default::default(),
         settings: Settings::new(config::APP_ID),
+        feeds: RefCell::new(vec![]),
       }
     }
   }
@@ -58,7 +62,6 @@ mod imp {
       let window = Window::new();
       window.set_application(Some(app));
       window.set_title(Some(&"BingeRSS".to_string()));
-      window.present();
 
       self.window.set(Some(&window));
 
@@ -123,11 +126,15 @@ mod imp {
           }
         ]"#;
 
-      let feeds: Vec<Feed> = serde_json::from_str(data).expect("valid json");
+      self
+        .feeds
+        .replace(serde_json::from_str(data).expect("valid json"));
 
-      for feed in feeds {
-        window.add_feed(feed);
+      for feed in self.feeds.borrow().iter() {
+        window.add_feed(feed.title.clone(), feed.url.clone());
       }
+
+      app.main_window().present();
     }
   }
 
@@ -146,70 +153,64 @@ impl Application {
       .expect("Application initialization failed")
   }
 
+  fn main_window(&self) -> Window {
+    self.imp().window.upgrade().unwrap()
+  }
+
   fn setup_actions(&self) {
-    if let Some(window) = self.imp().window.upgrade() {
-      {
-        let actions = gio::SimpleActionGroup::new();
-        window.insert_action_group("app", Some(&actions));
+    let window = self.main_window();
+    {
+      let action = gio::SimpleAction::new("about", None);
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        let dialog = gtk::AboutDialog::builder()
+          .program_name("BingeRSS")
+          .license_type(gtk::License::MitX11)
+          .logo_icon_name(config::APP_ID)
+          .authors(vec!["Simon Schneegans".into()])
+          .artists(vec!["Simon Schneegans".into()])
+          .website("https://github.com/schneegans/binge-rss")
+          .version(config::VERSION)
+          .transient_for(&window)
+          .modal(true)
+          .build();
 
-        {
-          let action = gio::SimpleAction::new("about", None);
-          action.connect_activate(glib::clone!(@weak window => move |_, _| {
-            let dialog = gtk::AboutDialog::builder()
-              .program_name("BingeRSS")
-              .license_type(gtk::License::MitX11)
-              .logo_icon_name(config::APP_ID)
-              .authors(vec!["Simon Schneegans".into()])
-              .artists(vec!["Simon Schneegans".into()])
-              .website("https://github.com/schneegans/binge-rss")
-              .version(config::VERSION)
-              .transient_for(&window)
-              .modal(true)
-              .build();
+        dialog.present();
+      }));
 
-            dialog.present();
-          }));
+      self.add_action(&action);
+    }
 
-          actions.add_action(&action);
-        }
+    {
+      let action = gio::SimpleAction::new("quit", None);
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        window.close();
+      }));
 
-        {
-          let action = gio::SimpleAction::new("quit", None);
-          action.connect_activate(glib::clone!(@weak window => move |_, _| {
-            window.close();
-          }));
-          actions.add_action(&action);
-        }
-      }
+      self.add_action(&action);
+    }
 
-      {
-        let actions = gio::SimpleActionGroup::new();
-        window.insert_action_group("feeds", Some(&actions));
+    {
+      let action = gio::SimpleAction::new("add-feed", None);
+      action.connect_activate(move |_, _| {
+        println!("add");
+      });
+      self.add_action(&action);
+    }
 
-        {
-          let action = gio::SimpleAction::new("add", None);
-          action.connect_activate(move |_, _| {
-            println!("add");
-          });
-          actions.add_action(&action);
-        }
+    {
+      let action = gio::SimpleAction::new("remove-feed", None);
+      action.connect_activate(move |_, _| {
+        println!("remove");
+      });
+      self.add_action(&action);
+    }
 
-        {
-          let action = gio::SimpleAction::new("remove", None);
-          action.connect_activate(move |_, _| {
-            println!("remove");
-          });
-          actions.add_action(&action);
-        }
-
-        {
-          let action = gio::SimpleAction::new("show", None);
-          action.connect_activate(glib::clone!(@weak window => move |_, _| {
-            window.show_feed_page();
-          }));
-          actions.add_action(&action);
-        }
-      }
+    {
+      let action = gio::SimpleAction::new("show-feed-page", None);
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        window.show_feed_page();
+      }));
+      self.add_action(&action);
     }
   }
 }

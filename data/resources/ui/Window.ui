@@ -58,7 +58,7 @@ SPDX-License-Identifier: MIT
                     <child type="start">
                       <object class="GtkButton" id="add_button">
                         <property name="icon-name">list-add-symbolic</property>
-                        <property name="action-name">feeds.add</property>
+                        <property name="action-name">app.add-feed</property>
                         <property name="tooltip-text">Add a new feed</property>
                       </object>
                     </child>
@@ -108,7 +108,7 @@ SPDX-License-Identifier: MIT
                     <child type="start">
                       <object class="GtkButton">
                         <property name="icon-name">go-previous-symbolic</property>
-                        <property name="action-name">feeds.show</property>
+                        <property name="action-name">app.show-feed-page</property>
                         <binding name="visible">
                           <lookup name="folded">leaflet</lookup>
                         </binding>
@@ -118,7 +118,7 @@ SPDX-License-Identifier: MIT
                     <child type="end">
                       <object class="GtkButton" id="remove_button">
                         <property name="icon-name">user-trash-symbolic</property>
-                        <property name="action-name">feeds.remove</property>
+                        <property name="action-name">app.remove-feed</property>
                         <property name="tooltip-text">Remove this feed</property>
                       </object>
                     </child>
