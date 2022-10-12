@@ -106,11 +106,11 @@ impl Application {
     {
       let action = gio::SimpleAction::new("about", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
-        let dialog = gtk::AboutDialog::builder()
-          .program_name("BingeRSS")
+        let dialog = adw::AboutWindow::builder()
+          .application_name("BingeRSS")
           .license_type(gtk::License::MitX11)
-          .logo_icon_name(config::APP_ID)
-          .authors(vec!["Simon Schneegans".into()])
+          .application_icon(config::APP_ID)
+          .developers(vec!["Simon Schneegans".into()])
           .artists(vec!["Simon Schneegans".into()])
           .website("https://github.com/schneegans/binge-rss")
           .version(config::VERSION)
@@ -143,9 +143,25 @@ impl Application {
 
     {
       let action = gio::SimpleAction::new("remove-feed", None);
-      action.connect_activate(move |_, _| {
-        println!("remove");
-      });
+      action.connect_activate(glib::clone!(@weak window => move |_, _| {
+        let dialog = adw::MessageDialog::builder()
+          .heading("Remove Selected Feed")
+          .body("Do you really want to remove the currently selected feed?")
+          .default_response("remove")
+          .close_response("cancel")
+          .transient_for(&window)
+          .modal(true)
+          .build();
+          dialog.add_response("cancel", "Cancel");
+          dialog.add_response("remove", "Remove");
+          dialog.set_response_appearance("remove", adw::ResponseAppearance::Destructive);
+
+          dialog.connect_response(Some("remove"), |_,_| {
+            println!("remove");
+          });
+
+        dialog.show();
+      }));
       self.add_action(&action);
     }
 

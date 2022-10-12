@@ -28,8 +28,7 @@ fn main() {
   gio::resources_register_include!("compiled.gresource").expect("register resources");
 
   gtk::init().expect("Failed to initialize GTK");
-
-  adw::init();
+  adw::init().expect("Failed to initialize ADW");
 
   let display = gdk::Display::default().expect("get default gdk::Display");
   gtk::IconTheme::for_display(&display).add_resource_path("/io/github/schneegans/BingeRSS");
