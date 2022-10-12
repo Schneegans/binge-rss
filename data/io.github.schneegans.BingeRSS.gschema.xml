@@ -6,18 +6,22 @@ SPDX-License-Identifier: MIT
 -->
 
 <schemalist>
-    <schema path="/io/github/schneegans/BingeRSS/" id="io.github.schneegans.BingeRSS">
-        <key name="window-width" type="i">
-            <default>600</default>
-            <summary>Window width</summary>
-        </key>
-        <key name="window-height" type="i">
-            <default>400</default>
-            <summary>Window height</summary>
-        </key>
-        <key name="is-maximized" type="b">
-            <default>false</default>
-            <summary>Window maximized state</summary>
-        </key>
-    </schema>
+  <schema path="/io/github/schneegans/BingeRSS/" id="io.github.schneegans.BingeRSS">
+    <key name="feeds" type="s">
+      <default>"[]"</default>
+      <summary>A JSON string containing information on all configured feeds</summary>
+    </key>
+    <key name="window-width" type="i">
+      <default>600</default>
+      <summary>Window width</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>400</default>
+      <summary>Window height</summary>
+    </key>
+    <key name="is-maximized" type="b">
+      <default>false</default>
+      <summary>Window maximized state</summary>
+    </key>
+  </schema>
 </schemalist>

@@ -22,6 +22,8 @@ use crate::view::FeedContentPage;
 mod imp {
   use adw::subclass::prelude::AdwApplicationWindowImpl;
 
+  use crate::config;
+
   use super::*;
 
   #[derive(Debug, CompositeTemplate)]
@@ -45,7 +47,7 @@ mod imp {
         feed_list: TemplateChild::default(),
         add_button: TemplateChild::default(),
         feed_details: TemplateChild::default(),
-        settings: gio::Settings::new("io.github.schneegans.BingeRSS"),
+        settings: gio::Settings::new(config::APP_ID),
       }
     }
   }

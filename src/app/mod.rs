@@ -10,7 +10,6 @@
 // SPDX-License-Identifier: MIT
 
 use adw::prelude::*;
-use gio::Settings;
 use glib::WeakRef;
 use gtk::{gio, glib, subclass::prelude::*};
 use std::cell::RefCell;
@@ -28,7 +27,7 @@ mod imp {
   #[derive(Debug)]
   pub struct Application {
     pub window: WeakRef<Window>,
-    pub settings: Settings,
+    pub settings: gio::Settings,
     pub feeds: RefCell<Vec<FeedSettings>>,
   }
 
@@ -36,7 +35,7 @@ mod imp {
     fn default() -> Self {
       Self {
         window: Default::default(),
-        settings: Settings::new(config::APP_ID),
+        settings: gio::Settings::new(config::APP_ID),
         feeds: RefCell::new(vec![]),
       }
     }
@@ -52,7 +51,7 @@ mod imp {
   impl ObjectImpl for Application {}
 
   impl ApplicationImpl for Application {
-    fn activate(&self, app: &Self::Type) {
+    fn activate(&self, this: &Self::Type) {
       if let Some(window) = self.window.upgrade() {
         window.show();
         window.present();
@@ -60,81 +59,26 @@ mod imp {
       }
 
       let window = Window::new();
-      window.set_application(Some(app));
+      window.set_application(Some(this));
       window.set_title(Some(&"BingeRSS".to_string()));
+
+      window.connect_close_request(
+        glib::clone!(@weak this => @default-return gtk::Inhibit(false), move |_| {
+          this.save_data();
+          gtk::Inhibit(false)
+        }),
+      );
 
       self.window.set(Some(&window));
 
-      app.setup_actions();
-
-      let data = r#"
-        [
-          {
-            "title": "Der SPIEGEL",
-            "url": "https://www.spiegel.de/schlagzeilen/tops/index.rss",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Unixporn",
-            "url": "http://reddit.com/r/unixporn/new/.rss?sort=new",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Forschung Aktuell",
-            "url": "https://www.deutschlandfunk.de/forschung-aktuell-104.xml",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Linux",
-            "url": "http://reddit.com/r/linux/new/.rss?sort=new",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "GNOME",
-            "url": "http://reddit.com/r/gnome/new/.rss?sort=new",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "OMG Ubuntu",
-            "url": "https://omgubuntu.co.uk/feed",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Blendernation",
-            "url": "https://www.blendernation.com/feed/",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "The Verge",
-            "url": "https://www.theverge.com/rss/index.xml",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Ars Technica",
-            "url": "https://feeds.arstechnica.com/arstechnica/features",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Hacker News",
-            "url": "https://news.ycombinator.com/rss",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          },
-          {
-            "title": "Vulnerabilities",
-            "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml",
-            "viewed": "2022-10-09 16:06:14 UTC"
-          }
-        ]"#;
-
-      self
-        .feeds
-        .replace(serde_json::from_str(data).expect("valid json"));
+      this.setup_actions();
+      this.load_data();
 
       for feed in self.feeds.borrow().iter() {
         window.add_feed(feed.title.clone(), feed.url.clone());
       }
 
-      app.main_window().present();
+      this.main_window().present();
     }
   }
 
@@ -212,6 +156,23 @@ impl Application {
       }));
       self.add_action(&action);
     }
+  }
+
+  fn load_data(&self) {
+    let data = self.imp().settings.string("feeds");
+    self
+      .imp()
+      .feeds
+      .replace(serde_json::from_str(data.as_str()).expect("valid json"));
+  }
+
+  fn save_data(&self) {
+    let json = serde_json::to_string(&self.imp().feeds).unwrap();
+    self
+      .imp()
+      .settings
+      .set_string("feeds", &json)
+      .expect("Failed to write settings!");
   }
 }
 
