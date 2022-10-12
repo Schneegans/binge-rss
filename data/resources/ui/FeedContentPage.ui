@@ -20,31 +20,22 @@ SPDX-License-Identifier: MIT
             <property name="child">
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
+                
                 <child>
                   <object class="AdwPreferencesGroup">
-
                     <property name="title">Filters</property>
-                    <child type="header-suffix">
-                      <object class="GtkButton" id="add_filter_button">
-                        <property name="child">
-                          <object class="AdwButtonContent">
-                            <property name="label">Add Filter</property>
-                            <property name="icon-name">list-add-symbolic</property>
-                          </object>
-                        </property>
-                        <style>
-                          <class name="image-text-button" />
-                          <class name="flat" />
-                        </style>
-                      </object>
-                    </child>
                     <child>
                       <object class="GtkListBox" id="filters">
-                        <!-- <child>
+                        <child>
                           <object class="AdwEntryRow">
-                            <property name="title">Name Contains</property>
+                            <property name="title">Filter by Name</property>
                           </object>
-                        </child> -->
+                        </child>
+                        <child>
+                          <object class="AdwEntryRow">
+                            <property name="title">Filter by Summary</property>
+                          </object>
+                        </child>
                         <style>
                           <class name="content" />
                         </style>
@@ -52,10 +43,11 @@ SPDX-License-Identifier: MIT
                     </child>
                   </object>
                 </child>
+
                 <child>
                   <object class="AdwPreferencesGroup">
-
                     <property name="title">Recent Items</property>
+                    <property name="margin_top">12</property>
                     <child>
                       <object class="GtkListBox" id="feed_items">
                         <style>
@@ -65,6 +57,7 @@ SPDX-License-Identifier: MIT
                     </child>
                   </object>
                 </child>
+                
               </object>
             </property>
           </object>
