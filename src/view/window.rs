@@ -116,12 +116,34 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
-  pub fn add_feed(&self, title: String, url: String) {
+  pub fn get_selected_id(&self) -> Option<String> {
+    match self.imp().feed_list.selected_row() {
+      None => None,
+      Some(row) => Some(row.widget_name().as_str().to_string()),
+    }
+  }
+
+  pub fn get_selected_title(&self) -> Option<String> {
+    match self.imp().feed_list.selected_row() {
+      None => None,
+      Some(row) => Some(
+        row
+          .downcast::<adw::ActionRow>()
+          .unwrap()
+          .title()
+          .as_str()
+          .to_string(),
+      ),
+    }
+  }
+
+  pub fn add_feed(&self, id: String, title: String, url: String) {
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
       .sensitive(false)
-      .title(title.as_str())
+      .name(&id)
+      .title(&title)
       .build();
     self.imp().feed_list.append(&row);
 

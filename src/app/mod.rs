@@ -74,8 +74,8 @@ mod imp {
       this.setup_actions();
       this.load_data();
 
-      for feed in self.feeds.borrow().iter() {
-        window.add_feed(feed.title.clone(), feed.url.clone());
+      for (i, feed) in self.feeds.borrow().iter().enumerate() {
+        window.add_feed(i.to_string(), feed.title.clone(), feed.url.clone());
       }
 
       this.main_window().present();
@@ -145,8 +145,7 @@ impl Application {
       let action = gio::SimpleAction::new("remove-feed", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
         let dialog = adw::MessageDialog::builder()
-          .heading("Remove Selected Feed")
-          .body("Do you really want to remove the currently selected feed?")
+          .heading(&format!("Remove the feed '{}'?", window.get_selected_title().unwrap()))
           .default_response("remove")
           .close_response("cancel")
           .transient_for(&window)
