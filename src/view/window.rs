@@ -205,13 +205,16 @@ impl Window {
       row.remove(&spinner);
       row.set_sensitive(true);
 
+      let avatar = adw::Avatar::builder().text(&title).size(24).icon_name("rss-symbolic").build();
+      row.add_prefix(&avatar);
+
       if feed.image.is_some() {
         let stream = gio::MemoryInputStream::from_bytes(&feed.image.unwrap());
         let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
 
         if pixbuf.is_ok() {
           let image = gtk::Image::from_pixbuf(Some(&pixbuf.unwrap()));
-          row.add_prefix(&image);
+          avatar.set_custom_image(Some(&image.paintable().unwrap()));
         }
       }
 
