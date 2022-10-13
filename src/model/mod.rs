@@ -12,20 +12,13 @@
 use gtk::glib;
 use serde::{Deserialize, Serialize};
 
+mod feed_item;
+
+pub use self::feed_item::FeedItem;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FeedSettings {
   pub title: String,
   pub url: String,
   pub viewed: String,
-}
-
-pub struct FeedData {
-  pub items: Vec<FeedItemData>,
-  pub image: Option<glib::Bytes>,
-}
-
-pub struct FeedItemData {
-  pub title: String,
-  pub url: String,
-  pub summary: String,
 }

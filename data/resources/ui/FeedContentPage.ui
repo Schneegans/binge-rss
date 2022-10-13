@@ -20,7 +20,7 @@ SPDX-License-Identifier: MIT
             <property name="child">
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
-                
+
                 <child>
                   <object class="AdwPreferencesGroup">
                     <property name="title">Filters</property>
@@ -45,11 +45,21 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="AdwPreferencesGroup">
+                  <object class="AdwStatusPage" id="connection_error">
+                    <property name="visible">false</property>
+                    <property name="title">Connection Error</property>
+                    <property name="icon_name">network-no-route-symbolic</property>
+                    <property name="description">Please check the URL or your internet connection and try again.</property>
+                  </object>
+                </child>
+
+                <child>
+                  <object class="AdwPreferencesGroup" id="feed_item_group">
+                    <property name="visible">false</property>
                     <property name="title">Recent Items</property>
                     <property name="margin_top">12</property>
                     <child>
-                      <object class="GtkListBox" id="feed_items">
+                      <object class="GtkListView" id="feed_items">
                         <style>
                           <class name="content" />
                         </style>
@@ -57,7 +67,7 @@ SPDX-License-Identifier: MIT
                     </child>
                   </object>
                 </child>
-                
+
               </object>
             </property>
           </object>

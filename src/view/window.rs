@@ -16,7 +16,7 @@ use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, glib, CompositeTemplate};
 
-use crate::model::{FeedData, FeedItemData};
+use crate::model::FeedItem;
 use crate::view::FeedContentPage;
 
 mod imp {
@@ -36,6 +36,8 @@ mod imp {
     #[template_child]
     pub add_button: TemplateChild<gtk::Button>,
     #[template_child]
+    pub header_label: TemplateChild<gtk::Label>,
+    #[template_child]
     pub feed_details: TemplateChild<gtk::Stack>,
     pub settings: gio::Settings,
   }
@@ -46,6 +48,7 @@ mod imp {
         leaflet: TemplateChild::default(),
         feed_list: TemplateChild::default(),
         add_button: TemplateChild::default(),
+        header_label: TemplateChild::default(),
         feed_details: TemplateChild::default(),
         settings: gio::Settings::new(config::APP_ID),
       }
@@ -141,7 +144,6 @@ impl Window {
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
-      .sensitive(false)
       .name(&id)
       .title(&title)
       .build();
@@ -151,17 +153,55 @@ impl Window {
     spinner.start();
     row.add_prefix(&spinner);
 
+    let subpage = gtk::ScrolledWindow::builder().build();
+    self.imp().feed_details.add_child(&subpage);
+
+    if self.imp().feed_details.first_child() == self.imp().feed_details.last_child() {
+      self.imp().feed_list.select_row(Some(&row));
+    }
+
+    let item_list = FeedContentPage::new();
+    subpage.set_child(Some(&item_list));
+
+    row.connect_activated(glib::clone!(@weak self as this => move |row| {
+      this.show_details_page();
+      this.imp().feed_details.set_visible_child(&subpage);
+      this.imp().header_label.set_label(&row.title());
+    }));
+
     let handle = crate::RUNTIME.spawn(async move {
       let bytes = reqwest::get(&url).await?.bytes().await?;
       let content = feed_rs::parser::parse(&bytes[..])?;
 
-      let mut data = FeedData {
-        items: vec![],
-        image: None,
-      };
+      let url = url::Url::parse(&content.links[0].href);
+      let icon_url = url.as_ref().unwrap().scheme().to_string()
+        + &String::from("://")
+        + &url.as_ref().unwrap().host().unwrap().to_string()
+        + &String::from("/favicon.ico");
 
-      data.items = content
-        .entries
+      let bytes = reqwest::get(icon_url).await?.bytes().await?;
+      let image = Some(glib::Bytes::from(&bytes.to_vec()));
+
+      Ok::<(feed_rs::model::Feed, Option<glib::Bytes>), Box<dyn Error + Send + Sync>>((
+        content, image,
+      ))
+    });
+
+    let ctx = glib::MainContext::default();
+    ctx.spawn_local(glib::clone!(@weak self as this => async move {
+
+      let feed = handle.await.unwrap();
+
+      row.remove(&spinner);
+
+      let avatar = adw::Avatar::builder().text(&title).size(24).icon_name("rss-symbolic").build();
+      row.add_prefix(&avatar);
+
+      if feed.is_ok() {
+
+        let (content, image) = feed.unwrap();
+
+        let items = content.entries
         .iter()
         .map(|item| {
           let title = if item.title.is_some() {
@@ -178,74 +218,38 @@ impl Window {
             String::from("")
           };
 
-          FeedItemData {
-            title: title,
-            url: url,
-            summary: summary,
-          }
+          FeedItem::new(title, url, summary)
         })
         .collect();
 
-      let url = url::Url::parse(&content.links[0].href);
-      let icon_url = url.as_ref().unwrap().scheme().to_string()
-        + &String::from("://")
-        + &url.as_ref().unwrap().host().unwrap().to_string()
-        + &String::from("/favicon.ico");
+        if image.is_some() {
+          let stream = gio::MemoryInputStream::from_bytes(&image.unwrap());
+          let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
 
-      let bytes = reqwest::get(icon_url).await?.bytes().await?;
-      data.image = Some(glib::Bytes::from(&bytes.to_vec()));
-
-      Ok::<FeedData, Box<dyn Error + Send + Sync>>(data)
-    });
-
-    let ctx = glib::MainContext::default();
-    ctx.spawn_local(glib::clone!(@weak self as this => async move {
-      let feed = handle.await.unwrap().unwrap();
-
-      row.remove(&spinner);
-      row.set_sensitive(true);
-
-      let avatar = adw::Avatar::builder().text(&title).size(24).icon_name("rss-symbolic").build();
-      row.add_prefix(&avatar);
-
-      if feed.image.is_some() {
-        let stream = gio::MemoryInputStream::from_bytes(&feed.image.unwrap());
-        let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
-
-        if pixbuf.is_ok() {
-          let image = gtk::Image::from_pixbuf(Some(&pixbuf.unwrap()));
-          avatar.set_custom_image(Some(&image.paintable().unwrap()));
+          if pixbuf.is_ok() {
+            let image = gtk::Image::from_pixbuf(Some(&pixbuf.unwrap()));
+            avatar.set_custom_image(Some(&image.paintable().unwrap()));
+          }
         }
+
+        {
+          let unread_count = 43;
+          let label = gtk::Label::builder()
+            .label(&unread_count.to_string())
+            .valign(gtk::Align::Center)
+            .css_classes(vec!["item-count-badge".to_string()])
+            .build();
+
+          row.add_suffix(&label);
+        }
+
+        item_list.set_items(items);
+
+      } else {
+        avatar.set_icon_name(Some("network-no-route-symbolic"));
+        row.set_subtitle("Connection failed.");
+        item_list.set_connection_failed();
       }
-
-      {
-        let unread_count = 43;
-        let label = gtk::Label::builder()
-          .label(&unread_count.to_string())
-          .valign(gtk::Align::Center)
-          .css_classes(vec!["item-count-badge".to_string()])
-          .build();
-
-        row.add_suffix(&label);
-      }
-
-      let subpage = gtk::ScrolledWindow::builder().build();
-
-      let item_list = FeedContentPage::new();
-      item_list.set_items(feed.items);
-
-      subpage.set_child(Some(&item_list));
-
-      this.imp().feed_details.add_child(&subpage);
-
-      if this.imp().feed_details.first_child() == this.imp().feed_details.last_child() {
-        this.imp().feed_list.select_row(Some(&row));
-      }
-
-      row.connect_activated( move |_| {
-        this.show_details_page();
-        this.imp().feed_details.set_visible_child(&subpage);
-      });
     }));
   }
 
