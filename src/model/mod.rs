@@ -9,7 +9,6 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use gtk::glib;
 use serde::{Deserialize, Serialize};
 
 mod feed_item;

@@ -11,8 +11,8 @@
 
 use adw::prelude::*;
 use glib::subclass::InitializingObject;
-use gtk::gio;
 use gtk::subclass::prelude::*;
+use gtk::{gio, pango};
 use gtk::{glib, CompositeTemplate};
 
 use crate::model::FeedItem;
@@ -27,8 +27,6 @@ mod imp {
     pub feed_items: TemplateChild<gtk::ListView>,
     #[template_child]
     pub connection_error: TemplateChild<adw::StatusPage>,
-    #[template_child]
-    pub feed_item_group: TemplateChild<adw::PreferencesGroup>,
   }
 
   #[glib::object_subclass]
@@ -65,35 +63,21 @@ impl FeedContentPage {
 
   pub fn set_connection_failed(&self) {
     self.imp().connection_error.set_visible(true);
-    self.imp().feed_item_group.set_visible(false);
+    self.imp().feed_items.set_visible(false);
   }
 
   pub fn set_items(&self, items: Vec<FeedItem>) {
     self.imp().connection_error.set_visible(false);
-    self.imp().feed_item_group.set_visible(true);
-
-    // for item in items {
-    //   let row = adw::ActionRow::builder()
-    //     .activatable(true)
-    //     .title(&glib::markup_escape_text(&item.get_title()))
-    //     .title_lines(1)
-    //     .selectable(false)
-    //     .build();
-
-    //   row.connect_activated(move |_| {
-    //     let result =
-    //       gio::AppInfo::launch_default_for_uri(&item.get_url(), gio::AppLaunchContext::NONE);
-    //     if result.is_err() {
-    //       println!("Failed to open URL {}", item.get_url());
-    //     }
-    //   });
-
-    //   self.imp().feed_items.append(&row);
-    // }
+    self.imp().feed_items.set_visible(true);
 
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(move |_, list_item| {
-      let label = adw::ActionRow::new();
+      let label = gtk::Label::builder()
+        .halign(gtk::Align::Start)
+        .ellipsize(pango::EllipsizeMode::End)
+        .margin_bottom(8)
+        .build();
+      list_item.set_activatable(false);
       list_item.set_child(Some(&label));
     });
 
@@ -106,16 +90,20 @@ impl FeedContentPage {
         .expect("The item has to be a `FeedItem`.");
 
       let title = feed_item.property::<String>("title");
+      let url = feed_item.property::<String>("url");
 
       // Get `Label` from `ListItem`
       let label = list_item
         .child()
         .expect("The child has to exist.")
-        .downcast::<adw::ActionRow>()
+        .downcast::<gtk::Label>()
         .expect("The child has to be a `Label`.");
 
-      // Set "label" to "number"
-      label.set_title(&title.to_string());
+      label.set_markup(&format!(
+        "<a href='{}'>{}</a>",
+        glib::markup_escape_text(&url.to_string()),
+        glib::markup_escape_text(&title.to_string())
+      ));
     });
 
     // Create new model
@@ -124,8 +112,9 @@ impl FeedContentPage {
     // Add the vector to the model
     model.extend_from_slice(&items);
 
-    let selection_model = gtk::SingleSelection::new(Some(&model));
+    let selection_model = gtk::NoSelection::new(Some(&model));
     self.imp().feed_items.set_model(Some(&selection_model));
     self.imp().feed_items.set_factory(Some(&factory));
+    self.imp().feed_items.set_css_classes(&["background"]);
   }
 }

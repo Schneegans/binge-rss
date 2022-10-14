@@ -1,7 +1,6 @@
 use gtk::{glib, subclass::prelude::ObjectSubclassIsExt};
 
 mod imp {
-  use futures::sink::Send;
   use gtk::prelude::ToValue;
   use std::cell::RefCell;
 

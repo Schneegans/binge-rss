@@ -22,8 +22,19 @@ SPDX-License-Identifier: MIT
                 <property name="orientation">vertical</property>
 
                 <child>
+                  <object class="GtkLabel">
+                    <property name="label">Filters</property>
+                    <property name="halign">start</property>
+                    <property name="margin_top">16</property>
+                    <property name="margin_bottom">8</property>
+                    <style>
+                      <class name="heading" />
+                    </style>
+                  </object>
+                </child>
+
+                <child>
                   <object class="AdwPreferencesGroup">
-                    <property name="title">Filters</property>
                     <child>
                       <object class="GtkListBox" id="filters">
                         <child>
@@ -45,8 +56,20 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
+                  <object class="GtkLabel">
+                    <property name="label">Recent Items</property>
+                    <property name="halign">start</property>
+                    <property name="margin_top">24</property>
+                    <style>
+                      <class name="heading" />
+                    </style>
+                  </object>
+                </child>
+
+                <child>
                   <object class="AdwStatusPage" id="connection_error">
                     <property name="visible">false</property>
+                    <property name="vexpand">true</property>
                     <property name="title">Connection Error</property>
                     <property name="icon_name">network-no-route-symbolic</property>
                     <property name="description">Please check the URL or your internet connection and try again.</property>
@@ -54,17 +77,9 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="AdwPreferencesGroup" id="feed_item_group">
+                  <object class="GtkListView" id="feed_items">
                     <property name="visible">false</property>
-                    <property name="title">Recent Items</property>
                     <property name="margin_top">12</property>
-                    <child>
-                      <object class="GtkListView" id="feed_items">
-                        <style>
-                          <class name="content" />
-                        </style>
-                      </object>
-                    </child>
                   </object>
                 </child>
 
