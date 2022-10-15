@@ -12,7 +12,7 @@
 use adw::prelude::*;
 use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
-use gtk::{gio, pango};
+use gtk::{gdk, gio, pango};
 use gtk::{glib, CompositeTemplate};
 
 use crate::model::FeedItem;
@@ -20,13 +20,25 @@ use crate::model::FeedItem;
 mod imp {
   use super::*;
 
-  #[derive(Debug, CompositeTemplate, Default)]
+  #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
   pub struct FeedContentPage {
     #[template_child]
-    pub feed_items: TemplateChild<gtk::ListView>,
+    pub view: TemplateChild<gtk::ListView>,
     #[template_child]
     pub connection_error: TemplateChild<adw::StatusPage>,
+
+    pub model: gio::ListStore,
+  }
+
+  impl Default for FeedContentPage {
+    fn default() -> Self {
+      Self {
+        view: TemplateChild::default(),
+        connection_error: TemplateChild::default(),
+        model: gio::ListStore::new(FeedItem::static_type()),
+      }
+    }
   }
 
   #[glib::object_subclass]
@@ -44,7 +56,30 @@ mod imp {
     }
   }
 
-  impl ObjectImpl for FeedContentPage {}
+  impl ObjectImpl for FeedContentPage {
+    fn constructed(&self, obj: &Self::Type) {
+      self.parent_constructed(obj);
+
+      self
+        .view
+        .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
+
+      self.view.connect_activate(|view, pos| {
+        let item = view
+          .model()
+          .unwrap()
+          .item(pos)
+          .unwrap()
+          .downcast::<FeedItem>()
+          .unwrap();
+        let url = item.property::<String>("url");
+        let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+        if result.is_err() {
+          println!("Failed to open URL {}", url);
+        }
+      });
+    }
+  }
 
   impl WidgetImpl for FeedContentPage {}
 
@@ -63,22 +98,39 @@ impl FeedContentPage {
 
   pub fn set_connection_failed(&self) {
     self.imp().connection_error.set_visible(true);
-    self.imp().feed_items.set_visible(false);
+    self.imp().view.set_visible(false);
   }
 
   pub fn set_items(&self, items: Vec<FeedItem>) {
     self.imp().connection_error.set_visible(false);
-    self.imp().feed_items.set_visible(true);
+    self.imp().view.set_visible(true);
 
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(move |_, list_item| {
       let label = gtk::Label::builder()
         .halign(gtk::Align::Start)
+        .hexpand(true)
         .ellipsize(pango::EllipsizeMode::End)
+        .margin_top(8)
         .margin_bottom(8)
+        .margin_start(8)
+        .margin_end(8)
         .build();
-      list_item.set_activatable(false);
-      list_item.set_child(Some(&label));
+
+      let icon = gtk::Image::builder()
+        .margin_top(8)
+        .margin_bottom(8)
+        .margin_start(8)
+        .margin_end(8)
+        .icon_name("external-link-symbolic")
+        .build();
+
+      let hbox = gtk::Box::builder().build();
+      hbox.append(&label);
+      hbox.append(&icon);
+
+      list_item.set_activatable(true);
+      list_item.set_child(Some(&hbox));
     });
 
     factory.connect_bind(move |_, list_item| {
@@ -90,31 +142,28 @@ impl FeedContentPage {
         .expect("The item has to be a `FeedItem`.");
 
       let title = feed_item.property::<String>("title");
-      let url = feed_item.property::<String>("url");
 
       // Get `Label` from `ListItem`
       let label = list_item
         .child()
-        .expect("The child has to exist.")
+        .unwrap()
+        .downcast::<gtk::Box>()
+        .unwrap()
+        .first_child()
+        .unwrap()
         .downcast::<gtk::Label>()
-        .expect("The child has to be a `Label`.");
+        .unwrap();
 
-      label.set_markup(&format!(
-        "<a href='{}'>{}</a>",
-        glib::markup_escape_text(&url.to_string()),
-        glib::markup_escape_text(&title.to_string())
-      ));
+      label.set_label(&title.to_string());
     });
 
-    // Create new model
-    let model = gio::ListStore::new(FeedItem::static_type());
-
     // Add the vector to the model
-    model.extend_from_slice(&items);
+    self.imp().model.remove_all();
+    self.imp().model.extend_from_slice(&items);
 
-    let selection_model = gtk::NoSelection::new(Some(&model));
-    self.imp().feed_items.set_model(Some(&selection_model));
-    self.imp().feed_items.set_factory(Some(&factory));
-    self.imp().feed_items.set_css_classes(&["background"]);
+    let selection_model = gtk::NoSelection::new(Some(&self.imp().model));
+    self.imp().view.set_model(Some(&selection_model));
+    self.imp().view.set_factory(Some(&factory));
+    self.imp().view.set_css_classes(&["card"]);
   }
 }

@@ -77,9 +77,10 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="GtkListView" id="feed_items">
+                  <object class="GtkListView" id="view">
                     <property name="visible">false</property>
                     <property name="margin_top">12</property>
+                    <property name="single_click_activate">true</property>
                   </object>
                 </child>
 
