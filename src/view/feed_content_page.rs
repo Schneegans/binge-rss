@@ -107,22 +107,24 @@ impl FeedContentPage {
 
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(move |_, list_item| {
+      const PADDING: i32 = 12;
+
       let label = gtk::Label::builder()
         .halign(gtk::Align::Start)
         .hexpand(true)
         .ellipsize(pango::EllipsizeMode::End)
-        .margin_top(8)
-        .margin_bottom(8)
-        .margin_start(8)
-        .margin_end(8)
+        .margin_top(PADDING)
+        .margin_bottom(PADDING)
+        .margin_start(PADDING)
+        .margin_end(PADDING)
         .build();
 
       let icon = gtk::Image::builder()
-        .margin_top(8)
-        .margin_bottom(8)
-        .margin_start(8)
-        .margin_end(8)
-        .icon_name("external-link-symbolic")
+        .margin_top(PADDING)
+        .margin_bottom(PADDING)
+        .margin_start(PADDING)
+        .margin_end(PADDING)
+        .icon_name("adw-external-link-symbolic")
         .build();
 
       let hbox = gtk::Box::builder().build();

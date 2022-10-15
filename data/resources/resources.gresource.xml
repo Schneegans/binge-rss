@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
   <gresource prefix="/io/github/schneegans/BingeRSS">
     <file compressed="true">style.css</file>
     <file compressed="true" preprocess="xml-stripblanks">scalable/actions/rss-symbolic.svg</file>
-    <file compressed="true" preprocess="xml-stripblanks">scalable/actions/external-link-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/FeedContentPage.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/Window.ui</file>
   </gresource>
