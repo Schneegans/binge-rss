@@ -61,6 +61,11 @@ mod imp {
       let window = Window::new();
       window.set_application(Some(this));
       window.set_title(Some(&"BingeRSS".to_string()));
+      window.set_icon_name(Some(config::APP_ID));
+
+      if config::PROFILE == "develop" {
+        window.add_css_class("devel");
+      }
 
       window.connect_close_request(
         glib::clone!(@weak this => @default-return gtk::Inhibit(false), move |_| {

@@ -9,5 +9,6 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-pub const APP_ID: &str = @APP_ID@;
-pub const VERSION: &str = @VERSION@;
+pub const APP_ID: &str = @app-id@;
+pub const PROFILE: &str = @profile@;
+pub const VERSION: &str = @version@;

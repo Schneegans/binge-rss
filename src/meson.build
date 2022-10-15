@@ -10,8 +10,9 @@
 # SPDX-License-Identifier: MIT
 
 global_conf = configuration_data()
-global_conf.set_quoted('APP_ID', app_id)
-global_conf.set_quoted('VERSION', version )
+global_conf.set_quoted('app-id', app_id)
+global_conf.set_quoted('version', version)
+global_conf.set_quoted('profile', get_option('profile'))
 config = configure_file(
   input: 'config.rs.in',
   output: 'config.rs',

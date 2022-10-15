@@ -21,6 +21,10 @@ gnome = import('gnome')
 
 app_id = 'io.github.schneegans.BingeRSS'
 
+if get_option('profile') == 'develop'
+  app_id = 'io.github.schneegans.BingeRSS.Devel'
+endif
+
 dependency('glib-2.0', version: '>= 2.66')
 dependency('gio-2.0', version: '>= 2.66')
 dependency('gtk4', version: '>= 4.6.0')

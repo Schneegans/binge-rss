@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 -->
 
 <schemalist>
-  <schema path="/io/github/schneegans/BingeRSS/" id="io.github.schneegans.BingeRSS">
+  <schema path="/io/github/schneegans/BingeRSS/" id="@app-id@">
     <key name="feeds" type="s">
       <default>"[]"</default>
       <summary>A JSON string containing information on all configured feeds</summary>

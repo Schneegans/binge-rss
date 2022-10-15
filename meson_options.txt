@@ -1,0 +1,10 @@
+option(
+  'profile',
+  type: 'combo',
+  choices: [
+    'release',
+    'develop'
+  ],
+  value: 'develop',
+  description: 'The build profile for BingeRSS. One of "develop" or "release".'
+)

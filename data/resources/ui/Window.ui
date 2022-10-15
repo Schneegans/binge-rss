@@ -68,7 +68,6 @@ SPDX-License-Identifier: MIT
   <template class="Window" parent="AdwApplicationWindow">
     <property name="default-width">800</property>
     <property name="default-height">600</property>
-    <property name="icon-name">io.github.schneegans.BingeRSS</property>
     <property name="content">
       <object class="AdwLeaflet" id="leaflet">
 
