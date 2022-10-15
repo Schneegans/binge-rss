@@ -34,5 +34,6 @@ fn main() {
   gtk::IconTheme::for_display(&display).add_resource_path("/io/github/schneegans/BingeRSS");
 
   let application = Application::new();
+  application.set_resource_base_path(Some("/io/github/schneegans/BingeRSS"));
   application.run();
 }
