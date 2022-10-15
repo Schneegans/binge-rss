@@ -20,9 +20,18 @@ project(
 gnome = import('gnome')
 
 app_id = 'io.github.schneegans.BingeRSS'
+version = meson.project_version()
 
 if get_option('profile') == 'develop'
   app_id = 'io.github.schneegans.BingeRSS.Devel'
+
+  vcs_tag = run_command('git', 'rev-parse', '--short', 'HEAD', check: false).stdout().strip()
+  if vcs_tag == ''
+    version = '@0@.devel'.format(version)
+  else
+    version = '@0@.@1@'.format(version, vcs_tag)
+  endif
+
 endif
 
 dependency('glib-2.0', version: '>= 2.66')
@@ -33,7 +42,6 @@ dependency('libadwaita-1', version: '>= 1.1.0')
 glib_compile_schemas = find_program('glib-compile-schemas', required: true)
 cargo = find_program('cargo', required: true)
 
-version = meson.project_version()
 
 prefix = get_option('prefix')
 bindir = prefix / get_option('bindir')
