@@ -24,19 +24,32 @@ mod imp {
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
   pub struct FeedContentPage {
     #[template_child]
+    pub name_filter: TemplateChild<adw::EntryRow>,
+    #[template_child]
     pub view: TemplateChild<gtk::ListView>,
     #[template_child]
     pub connection_error: TemplateChild<adw::StatusPage>,
 
     pub model: gio::ListStore,
+    pub filter: gtk::StringFilter,
   }
 
   impl Default for FeedContentPage {
     fn default() -> Self {
       Self {
+        name_filter: TemplateChild::default(),
         view: TemplateChild::default(),
         connection_error: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
+        filter: gtk::StringFilter::builder()
+          .ignore_case(true)
+          .match_mode(gtk::StringFilterMatchMode::Substring)
+          .expression(gtk::PropertyExpression::new(
+            FeedItem::static_type(),
+            gtk::Expression::NONE,
+            "title",
+          ))
+          .build(),
       }
     }
   }
@@ -78,6 +91,12 @@ mod imp {
           println!("Failed to open URL {}", url);
         }
       });
+
+      self
+        .name_filter
+        .connect_changed(glib::clone!(@weak obj => move |entry| {
+          obj.imp().filter.set_search(Some(&entry.text()));
+        }));
     }
   }
 
@@ -163,7 +182,8 @@ impl FeedContentPage {
     self.imp().model.remove_all();
     self.imp().model.extend_from_slice(&items);
 
-    let selection_model = gtk::NoSelection::new(Some(&self.imp().model));
+    let filter_model = gtk::FilterListModel::new(Some(&self.imp().model), Some(&self.imp().filter));
+    let selection_model = gtk::NoSelection::new(Some(&filter_model));
     self.imp().view.set_model(Some(&selection_model));
     self.imp().view.set_factory(Some(&factory));
     self.imp().view.set_css_classes(&["card"]);
