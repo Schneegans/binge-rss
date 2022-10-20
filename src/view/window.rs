@@ -212,13 +212,7 @@ impl Window {
 
           let url = item.links[0].href.clone();
 
-          let summary = if item.summary.is_some() {
-            item.summary.as_ref().unwrap().content.clone()
-          } else {
-            String::from("")
-          };
-
-          FeedItem::new(title, url, summary)
+          FeedItem::new(title, url)
         })
         .collect();
 

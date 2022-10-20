@@ -15,7 +15,6 @@ mod imp {
   pub struct FeedItem {
     pub title: RefCell<String>,
     pub url: RefCell<String>,
-    pub summary: RefCell<String>,
   }
 
   // The central trait for subclassing a GObject
@@ -32,7 +31,6 @@ mod imp {
         vec![
           ParamSpecString::builder("title").build(),
           ParamSpecString::builder("url").build(),
-          ParamSpecString::builder("summary").build(),
         ]
       });
       PROPERTIES.as_ref()
@@ -54,13 +52,6 @@ mod imp {
               .expect("The value needs to be of type `String`."),
           );
         }
-        "summary" => {
-          self.summary.replace(
-            value
-              .get()
-              .expect("The value needs to be of type `String`."),
-          );
-        }
         _ => unimplemented!(),
       }
     }
@@ -69,7 +60,6 @@ mod imp {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),
-        "summary" => self.summary.borrow().clone().to_value(),
         _ => unimplemented!(),
       }
     }
@@ -81,9 +71,8 @@ glib::wrapper! {
 }
 
 impl FeedItem {
-  pub fn new(title: String, url: String, summary: String) -> Self {
-    glib::Object::new(&[("title", &title), ("url", &url), ("summary", &summary)])
-      .expect("creating 'FeedItem'")
+  pub fn new(title: String, url: String) -> Self {
+    glib::Object::new(&[("title", &title), ("url", &url)]).expect("creating 'FeedItem'")
   }
 
   pub fn get_title(&self) -> String {
@@ -92,9 +81,5 @@ impl FeedItem {
 
   pub fn get_url(&self) -> String {
     self.imp().url.borrow().clone()
-  }
-
-  pub fn get_summary(&self) -> String {
-    self.imp().summary.borrow().clone()
   }
 }

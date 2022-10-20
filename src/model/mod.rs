@@ -20,4 +20,5 @@ pub struct FeedSettings {
   pub title: String,
   pub url: String,
   pub viewed: String,
+  pub filter: Vec<String>,
 }

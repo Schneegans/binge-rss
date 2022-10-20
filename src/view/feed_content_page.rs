@@ -85,7 +85,7 @@ mod imp {
           .unwrap()
           .downcast::<FeedItem>()
           .unwrap();
-        let url = item.property::<String>("url");
+        let url = item.get_url();
         let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
         if result.is_err() {
           println!("Failed to open URL {}", url);
@@ -162,7 +162,7 @@ impl FeedContentPage {
         .downcast::<FeedItem>()
         .expect("The item has to be a `FeedItem`.");
 
-      let title = feed_item.property::<String>("title");
+      let title = feed_item.get_title();
 
       // Get `Label` from `ListItem`
       let label = list_item
@@ -187,5 +187,16 @@ impl FeedContentPage {
     self.imp().view.set_model(Some(&selection_model));
     self.imp().view.set_factory(Some(&factory));
     self.imp().view.set_css_classes(&["card"]);
+  }
+
+  pub fn set_filter(&self, filter: String) {
+    self.imp().filter.set_search(Some(&filter));
+  }
+
+  pub fn get_filter(&self) -> String {
+    match self.imp().filter.search() {
+      Some(text) => text.to_string(),
+      None => "".to_string(),
+    }
   }
 }
