@@ -39,6 +39,10 @@ mod imp {
     pub header_label: TemplateChild<gtk::Label>,
     #[template_child]
     pub feed_details: TemplateChild<gtk::Stack>,
+    #[template_child]
+    pub new_feed_title: TemplateChild<gtk::Entry>,
+    #[template_child]
+    pub new_feed_url: TemplateChild<gtk::Entry>,
     pub settings: gio::Settings,
   }
 
@@ -50,6 +54,8 @@ mod imp {
         add_button: TemplateChild::default(),
         header_label: TemplateChild::default(),
         feed_details: TemplateChild::default(),
+        new_feed_title: TemplateChild::default(),
+        new_feed_url: TemplateChild::default(),
         settings: gio::Settings::new(config::APP_ID),
       }
     }
@@ -119,6 +125,15 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
+  pub fn select_first_feed(&self) {
+    let child = self.imp().feed_list.first_child();
+
+    if child.is_some() {
+      let row = child.unwrap().downcast::<adw::ActionRow>().unwrap();
+      adw::prelude::ActionRowExt::activate(&row);
+    }
+  }
+
   pub fn get_selected_id(&self) -> Option<String> {
     match self.imp().feed_list.selected_row() {
       None => None,
@@ -153,21 +168,16 @@ impl Window {
     spinner.start();
     row.add_prefix(&spinner);
 
-    let subpage = gtk::ScrolledWindow::builder().build();
-    self.imp().feed_details.add_child(&subpage);
-
-    if self.imp().feed_details.first_child() == self.imp().feed_details.last_child() {
-      self.imp().feed_list.select_row(Some(&row));
-    }
-
     let item_list = FeedContentPage::new();
-    subpage.set_child(Some(&item_list));
+    self.imp().feed_details.add_named(&item_list, Some(&id));
 
-    row.connect_activated(glib::clone!(@weak self as this => move |row| {
-      this.show_details_page();
-      this.imp().feed_details.set_visible_child(&subpage);
-      this.imp().header_label.set_label(&row.title());
-    }));
+    row.connect_activated(
+      glib::clone!(@weak self as this, @weak item_list => move |row| {
+        this.show_details_page();
+        this.imp().feed_details.set_visible_child(&item_list);
+        this.imp().header_label.set_label(&row.title());
+      }),
+    );
 
     let handle = crate::RUNTIME.spawn(async move {
       let bytes = reqwest::get(&url).await?.bytes().await?;
@@ -247,6 +257,62 @@ impl Window {
     }));
   }
 
+  pub fn remove_selected_feed(&self) -> Option<String> {
+    let list = &self.imp().feed_list;
+    let row = list.selected_row()?;
+    let id = row.property::<String>("name");
+
+    let mut next_row: Option<gtk::ListBoxRow> = None;
+
+    if row.next_sibling().is_some() {
+      next_row = Some(
+        row
+          .next_sibling()
+          .unwrap()
+          .downcast::<gtk::ListBoxRow>()
+          .unwrap(),
+      );
+    } else if row.prev_sibling().is_some() {
+      next_row = Some(
+        row
+          .prev_sibling()
+          .unwrap()
+          .downcast::<gtk::ListBoxRow>()
+          .unwrap(),
+      );
+    }
+
+    list.remove(&row);
+
+    let page = self.get_feed_content_page(&id)?;
+    self.imp().feed_details.remove(&page);
+
+    self.imp().header_label.set_label("");
+
+    self
+      .imp()
+      .feed_details
+      .set_visible_child_name("no_feeds_message");
+
+    if next_row.is_some() {
+      next_row.unwrap().activate();
+    }
+
+    if self.imp().leaflet.is_folded() {
+      self.show_feed_page();
+    }
+
+    Some(id)
+  }
+
+  pub fn set_filter(&self, id: &String, filter: &String) {
+    self.get_feed_content_page(id).unwrap().set_filter(filter);
+  }
+
+  pub fn get_filter(&self, id: &String) -> String {
+    self.get_feed_content_page(id).unwrap().get_filter()
+  }
+
   pub fn show_feed_page(&self) {
     self.imp().leaflet.set_visible_child_name("feed_list_page");
   }
@@ -256,6 +322,16 @@ impl Window {
       .imp()
       .leaflet
       .set_visible_child_name("feed_details_page");
+  }
+
+  fn get_feed_content_page(&self, id: &String) -> Option<FeedContentPage> {
+    let page = self.imp().feed_details.child_by_name(id.as_str());
+
+    if page.is_some() {
+      Some(page?.downcast::<FeedContentPage>().unwrap())
+    } else {
+      None
+    }
   }
 
   fn save_window_size(&self) -> Result<(), glib::BoolError> {

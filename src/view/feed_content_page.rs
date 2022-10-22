@@ -189,14 +189,11 @@ impl FeedContentPage {
     self.imp().view.set_css_classes(&["card"]);
   }
 
-  pub fn set_filter(&self, filter: String) {
-    self.imp().filter.set_search(Some(&filter));
+  pub fn set_filter(&self, filter: &String) {
+    self.imp().name_filter.set_text(filter);
   }
 
   pub fn get_filter(&self) -> String {
-    match self.imp().filter.search() {
-      Some(text) => text.to_string(),
-      None => "".to_string(),
-    }
+    self.imp().name_filter.text().to_string()
   }
 }

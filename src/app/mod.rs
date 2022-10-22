@@ -81,7 +81,13 @@ mod imp {
 
       for (i, feed) in self.feeds.borrow().iter().enumerate() {
         window.add_feed(i.to_string(), feed.title.clone(), feed.url.clone());
+
+        if feed.filter.len() > 0 {
+          window.set_filter(&i.to_string(), &feed.filter[0]);
+        }
       }
+
+      window.select_first_feed();
 
       this.main_window().present();
     }
@@ -160,8 +166,10 @@ impl Application {
           dialog.add_response("remove", "Remove");
           dialog.set_response_appearance("remove", adw::ResponseAppearance::Destructive);
 
-          dialog.connect_response(Some("remove"), |_,_| {
-            println!("remove");
+          dialog.connect_response(Some("remove"), move |_,_| {
+            let id = window.remove_selected_feed();
+
+            println!("removed {:?}", id);
           });
 
         dialog.show();

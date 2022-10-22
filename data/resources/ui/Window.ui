@@ -166,6 +166,19 @@ SPDX-License-Identifier: MIT
                   <object class="GtkStack" id="feed_details">
                     <property name="hexpand">true</property>
                     <property name="width-request">300</property>
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">no_feeds_message</property>
+                        <property name="child">
+                          <object class="AdwStatusPage">
+                            <property name="vexpand">true</property>
+                            <property name="title">No Feeds Yet</property>
+                            <property name="icon_name">rss-symbolic</property>
+                            <property name="description">Add your first feed by clicking on the plus button in the top left corner!</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
