@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: Cargo.lock build-aux/*
+Copyright: Simon Schneegans <code@simonschneegans.de>
+License: CC0-1.0
+
+Files: data/*.svg data/*.png
+Copyright: Simon Schneegans <code@simonschneegans.de>
+License: CC-BY-4.0
