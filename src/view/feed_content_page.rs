@@ -17,97 +17,9 @@ use gtk::{glib, CompositeTemplate};
 
 use crate::model::FeedItem;
 
-mod imp {
-  use super::*;
-
-  #[derive(Debug, CompositeTemplate)]
-  #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
-  pub struct FeedContentPage {
-    #[template_child]
-    pub name_filter: TemplateChild<adw::EntryRow>,
-    #[template_child]
-    pub view: TemplateChild<gtk::ListView>,
-    #[template_child]
-    pub connection_error: TemplateChild<adw::StatusPage>,
-
-    pub model: gio::ListStore,
-    pub filter: gtk::StringFilter,
-  }
-
-  impl Default for FeedContentPage {
-    fn default() -> Self {
-      Self {
-        name_filter: TemplateChild::default(),
-        view: TemplateChild::default(),
-        connection_error: TemplateChild::default(),
-        model: gio::ListStore::new(FeedItem::static_type()),
-        filter: gtk::StringFilter::builder()
-          .ignore_case(true)
-          .match_mode(gtk::StringFilterMatchMode::Substring)
-          .expression(gtk::PropertyExpression::new(
-            FeedItem::static_type(),
-            gtk::Expression::NONE,
-            "title",
-          ))
-          .build(),
-      }
-    }
-  }
-
-  #[glib::object_subclass]
-  impl ObjectSubclass for FeedContentPage {
-    const NAME: &'static str = "FeedContentPage";
-    type Type = super::FeedContentPage;
-    type ParentType = gtk::Box;
-
-    fn class_init(klass: &mut Self::Class) {
-      klass.bind_template();
-    }
-
-    fn instance_init(obj: &InitializingObject<Self>) {
-      obj.init_template();
-    }
-  }
-
-  impl ObjectImpl for FeedContentPage {
-    fn constructed(&self, obj: &Self::Type) {
-      self.parent_constructed(obj);
-
-      self
-        .view
-        .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
-
-      self.view.connect_activate(|view, pos| {
-        let item = view
-          .model()
-          .unwrap()
-          .item(pos)
-          .unwrap()
-          .downcast::<FeedItem>()
-          .unwrap();
-        let url = item.get_url();
-        let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
-        if result.is_err() {
-          println!("Failed to open URL {}", url);
-        }
-      });
-
-      self
-        .name_filter
-        .connect_changed(glib::clone!(@weak obj => move |entry| {
-          obj.imp().filter.set_search(Some(&entry.text()));
-        }));
-    }
-  }
-
-  impl WidgetImpl for FeedContentPage {}
-
-  impl BoxImpl for FeedContentPage {}
-}
-
 glib::wrapper! {
-    pub struct FeedContentPage(ObjectSubclass<imp::FeedContentPage>)
-        @extends gtk::Widget, gtk::Box, @implements gtk::Accessible, gtk::Buildable, gtk::Orientable;
+  pub struct FeedContentPage(ObjectSubclass<imp::FeedContentPage>)
+      @extends gtk::Widget, gtk::Box, @implements gtk::Accessible, gtk::Buildable, gtk::Orientable;
 }
 
 impl FeedContentPage {
@@ -196,4 +108,92 @@ impl FeedContentPage {
   pub fn get_filter(&self) -> String {
     self.imp().name_filter.text().to_string()
   }
+}
+
+mod imp {
+  use super::*;
+
+  #[derive(Debug, CompositeTemplate)]
+  #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
+  pub struct FeedContentPage {
+    #[template_child]
+    pub name_filter: TemplateChild<adw::EntryRow>,
+    #[template_child]
+    pub view: TemplateChild<gtk::ListView>,
+    #[template_child]
+    pub connection_error: TemplateChild<adw::StatusPage>,
+
+    pub model: gio::ListStore,
+    pub filter: gtk::StringFilter,
+  }
+
+  impl Default for FeedContentPage {
+    fn default() -> Self {
+      Self {
+        name_filter: TemplateChild::default(),
+        view: TemplateChild::default(),
+        connection_error: TemplateChild::default(),
+        model: gio::ListStore::new(FeedItem::static_type()),
+        filter: gtk::StringFilter::builder()
+          .ignore_case(true)
+          .match_mode(gtk::StringFilterMatchMode::Substring)
+          .expression(gtk::PropertyExpression::new(
+            FeedItem::static_type(),
+            gtk::Expression::NONE,
+            "title",
+          ))
+          .build(),
+      }
+    }
+  }
+
+  #[glib::object_subclass]
+  impl ObjectSubclass for FeedContentPage {
+    const NAME: &'static str = "FeedContentPage";
+    type Type = super::FeedContentPage;
+    type ParentType = gtk::Box;
+
+    fn class_init(klass: &mut Self::Class) {
+      klass.bind_template();
+    }
+
+    fn instance_init(obj: &InitializingObject<Self>) {
+      obj.init_template();
+    }
+  }
+
+  impl ObjectImpl for FeedContentPage {
+    fn constructed(&self, obj: &Self::Type) {
+      self.parent_constructed(obj);
+
+      self
+        .view
+        .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
+
+      self.view.connect_activate(|view, pos| {
+        let item = view
+          .model()
+          .unwrap()
+          .item(pos)
+          .unwrap()
+          .downcast::<FeedItem>()
+          .unwrap();
+        let url = item.get_url();
+        let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+        if result.is_err() {
+          println!("Failed to open URL {}", url);
+        }
+      });
+
+      self
+        .name_filter
+        .connect_changed(glib::clone!(@weak obj => move |entry| {
+          obj.imp().filter.set_search(Some(&entry.text()));
+        }));
+    }
+  }
+
+  impl WidgetImpl for FeedContentPage {}
+
+  impl BoxImpl for FeedContentPage {}
 }

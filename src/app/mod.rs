@@ -18,88 +18,10 @@ use crate::config;
 use crate::model::FeedSettings;
 use crate::view::Window;
 
-mod imp {
-
-  use adw::subclass::prelude::AdwApplicationImpl;
-
-  use super::*;
-
-  #[derive(Debug)]
-  pub struct Application {
-    pub window: WeakRef<Window>,
-    pub settings: gio::Settings,
-    pub feeds: RefCell<Vec<FeedSettings>>,
-  }
-
-  impl Default for Application {
-    fn default() -> Self {
-      Self {
-        window: Default::default(),
-        settings: gio::Settings::new(config::APP_ID),
-        feeds: RefCell::new(vec![]),
-      }
-    }
-  }
-
-  #[glib::object_subclass]
-  impl ObjectSubclass for Application {
-    const NAME: &'static str = "Application";
-    type Type = super::Application;
-    type ParentType = adw::Application;
-  }
-
-  impl ObjectImpl for Application {}
-
-  impl ApplicationImpl for Application {
-    fn activate(&self, this: &Self::Type) {
-      if let Some(window) = self.window.upgrade() {
-        window.show();
-        window.present();
-        return;
-      }
-
-      let window = Window::new();
-      window.set_application(Some(this));
-      window.set_title(Some(&"BingeRSS".to_string()));
-      window.set_icon_name(Some(config::APP_ID));
-
-      if config::PROFILE == "develop" {
-        window.add_css_class("devel");
-      }
-
-      window.connect_close_request(
-        glib::clone!(@weak this => @default-return gtk::Inhibit(false), move |_| {
-          this.save_data();
-          gtk::Inhibit(false)
-        }),
-      );
-
-      self.window.set(Some(&window));
-
-      this.setup_actions();
-      this.load_data();
-
-      for (i, feed) in self.feeds.borrow().iter().enumerate() {
-        window.add_feed(i.to_string(), feed.title.clone(), feed.url.clone());
-
-        if feed.filter.len() > 0 {
-          window.set_filter(&i.to_string(), &feed.filter[0]);
-        }
-      }
-
-      window.select_first_feed();
-
-      this.main_window().present();
-    }
-  }
-
-  impl GtkApplicationImpl for Application {}
-  impl AdwApplicationImpl for Application {}
-}
-
 glib::wrapper! {
-    pub struct Application(ObjectSubclass<imp::Application>)
-        @extends gio::Application, gtk::Application, adw::Application, @implements gio::ActionMap, gio::ActionGroup;
+  pub struct Application(ObjectSubclass<imp::Application>)
+    @extends gio::Application, gtk::Application, adw::Application,
+    @implements gio::ActionMap, gio::ActionGroup;
 }
 
 impl Application {
@@ -211,4 +133,82 @@ impl Default for Application {
       .downcast::<Application>()
       .unwrap()
   }
+}
+
+mod imp {
+
+  use super::*;
+  use adw::subclass::prelude::AdwApplicationImpl;
+
+  #[derive(Debug)]
+  pub struct Application {
+    pub window: WeakRef<Window>,
+    pub settings: gio::Settings,
+    pub feeds: RefCell<Vec<FeedSettings>>,
+  }
+
+  impl Default for Application {
+    fn default() -> Self {
+      Self {
+        window: Default::default(),
+        settings: gio::Settings::new(config::APP_ID),
+        feeds: RefCell::new(vec![]),
+      }
+    }
+  }
+
+  #[glib::object_subclass]
+  impl ObjectSubclass for Application {
+    const NAME: &'static str = "Application";
+    type Type = super::Application;
+    type ParentType = adw::Application;
+  }
+
+  impl ObjectImpl for Application {}
+
+  impl ApplicationImpl for Application {
+    fn activate(&self, this: &Self::Type) {
+      if let Some(window) = self.window.upgrade() {
+        window.show();
+        window.present();
+        return;
+      }
+
+      let window = Window::new();
+      window.set_application(Some(this));
+      window.set_title(Some(&"BingeRSS".to_string()));
+      window.set_icon_name(Some(config::APP_ID));
+
+      if config::PROFILE == "develop" {
+        window.add_css_class("devel");
+      }
+
+      window.connect_close_request(
+        glib::clone!(@weak this => @default-return gtk::Inhibit(false), move |_| {
+          this.save_data();
+          gtk::Inhibit(false)
+        }),
+      );
+
+      self.window.set(Some(&window));
+
+      this.setup_actions();
+      this.load_data();
+
+      for (i, feed) in self.feeds.borrow().iter().enumerate() {
+        window.add_feed(i.to_string(), feed.title.clone(), feed.url.clone());
+
+        if feed.filter.len() > 0 {
+          window.set_filter(&i.to_string(), &feed.filter[0]);
+        }
+      }
+
+      window.select_first_feed();
+
+      this.main_window().present();
+    }
+  }
+
+  impl GtkApplicationImpl for Application {}
+  impl AdwApplicationImpl for Application {}
 }

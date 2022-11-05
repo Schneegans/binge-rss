@@ -9,8 +9,12 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-mod feed_content_page;
-mod window;
+use serde::{Deserialize, Serialize};
 
-pub use self::feed_content_page::FeedContentPage;
-pub use self::window::Window;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FeedSettings {
+  pub title: String,
+  pub url: String,
+  pub viewed: String,
+  pub filter: Vec<String>,
+}

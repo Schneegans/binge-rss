@@ -11,6 +11,24 @@
 
 use gtk::{glib, subclass::prelude::ObjectSubclassIsExt};
 
+glib::wrapper! {
+  pub struct FeedItem(ObjectSubclass<imp::FeedItem>);
+}
+
+impl FeedItem {
+  pub fn new(title: String, url: String) -> Self {
+    glib::Object::new(&[("title", &title), ("url", &url)]).expect("creating 'FeedItem'")
+  }
+
+  pub fn get_title(&self) -> String {
+    self.imp().title.borrow().clone()
+  }
+
+  pub fn get_url(&self) -> String {
+    self.imp().url.borrow().clone()
+  }
+}
+
 mod imp {
   use gtk::prelude::ToValue;
   use std::cell::RefCell;
@@ -74,23 +92,5 @@ mod imp {
         _ => unimplemented!(),
       }
     }
-  }
-}
-
-glib::wrapper! {
-    pub struct FeedItem(ObjectSubclass<imp::FeedItem>);
-}
-
-impl FeedItem {
-  pub fn new(title: String, url: String) -> Self {
-    glib::Object::new(&[("title", &title), ("url", &url)]).expect("creating 'FeedItem'")
-  }
-
-  pub fn get_title(&self) -> String {
-    self.imp().title.borrow().clone()
-  }
-
-  pub fn get_url(&self) -> String {
-    self.imp().url.borrow().clone()
   }
 }

@@ -19,105 +19,9 @@ use gtk::{gdk, gio, glib, CompositeTemplate};
 use crate::model::FeedItem;
 use crate::view::FeedContentPage;
 
-mod imp {
-  use adw::subclass::prelude::AdwApplicationWindowImpl;
-
-  use crate::config;
-
-  use super::*;
-
-  #[derive(Debug, CompositeTemplate)]
-  #[template(resource = "/io/github/schneegans/BingeRSS/ui/Window.ui")]
-  pub struct Window {
-    #[template_child]
-    pub leaflet: TemplateChild<adw::Leaflet>,
-    #[template_child]
-    pub feed_list: TemplateChild<gtk::ListBox>,
-    #[template_child]
-    pub add_button: TemplateChild<gtk::Button>,
-    #[template_child]
-    pub header_label: TemplateChild<gtk::Label>,
-    #[template_child]
-    pub feed_details: TemplateChild<gtk::Stack>,
-    #[template_child]
-    pub new_feed_title: TemplateChild<gtk::Entry>,
-    #[template_child]
-    pub new_feed_url: TemplateChild<gtk::Entry>,
-    pub settings: gio::Settings,
-  }
-
-  impl Default for Window {
-    fn default() -> Self {
-      Self {
-        leaflet: TemplateChild::default(),
-        feed_list: TemplateChild::default(),
-        add_button: TemplateChild::default(),
-        header_label: TemplateChild::default(),
-        feed_details: TemplateChild::default(),
-        new_feed_title: TemplateChild::default(),
-        new_feed_url: TemplateChild::default(),
-        settings: gio::Settings::new(config::APP_ID),
-      }
-    }
-  }
-
-  #[glib::object_subclass]
-  impl ObjectSubclass for Window {
-    const NAME: &'static str = "Window";
-    type Type = super::Window;
-    type ParentType = adw::ApplicationWindow;
-
-    fn class_init(klass: &mut Self::Class) {
-      klass.bind_template();
-    }
-
-    fn instance_init(obj: &InitializingObject<Self>) {
-      obj.init_template();
-    }
-  }
-
-  impl ObjectImpl for Window {
-    fn constructed(&self, obj: &Self::Type) {
-      self.parent_constructed(obj);
-
-      obj.load_window_size();
-
-      self.feed_list.set_sort_func(|a, b| -> gtk::Ordering {
-        let a = a.downcast_ref::<adw::ActionRow>().unwrap().title();
-        let b = b.downcast_ref::<adw::ActionRow>().unwrap().title();
-
-        if a < b {
-          gtk::Ordering::Smaller
-        } else if a > b {
-          gtk::Ordering::Larger
-        } else {
-          gtk::Ordering::Equal
-        }
-      });
-    }
-  }
-
-  impl WidgetImpl for Window {}
-
-  impl WindowImpl for Window {
-    fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
-      if let Err(err) = window.save_window_size() {
-        println!("Failed to save window state, {}", &err);
-      }
-
-      // Pass close request on to the parent
-      self.parent_close_request(window)
-    }
-  }
-
-  impl ApplicationWindowImpl for Window {}
-
-  impl AdwApplicationWindowImpl for Window {}
-}
-
 glib::wrapper! {
-    pub struct Window(ObjectSubclass<imp::Window>)
-        @extends gtk::Widget, gtk::Window, adw::Window, @implements gtk::Accessible, gtk::Buildable;
+  pub struct Window(ObjectSubclass<imp::Window>)
+      @extends gtk::Widget, gtk::Window, adw::Window, @implements gtk::Accessible, gtk::Buildable;
 }
 
 impl Window {
@@ -359,4 +263,100 @@ impl Window {
       self.maximize();
     }
   }
+}
+
+mod imp {
+  use adw::subclass::prelude::AdwApplicationWindowImpl;
+
+  use crate::config;
+
+  use super::*;
+
+  #[derive(Debug, CompositeTemplate)]
+  #[template(resource = "/io/github/schneegans/BingeRSS/ui/Window.ui")]
+  pub struct Window {
+    #[template_child]
+    pub leaflet: TemplateChild<adw::Leaflet>,
+    #[template_child]
+    pub feed_list: TemplateChild<gtk::ListBox>,
+    #[template_child]
+    pub add_button: TemplateChild<gtk::Button>,
+    #[template_child]
+    pub header_label: TemplateChild<gtk::Label>,
+    #[template_child]
+    pub feed_details: TemplateChild<gtk::Stack>,
+    #[template_child]
+    pub new_feed_title: TemplateChild<gtk::Entry>,
+    #[template_child]
+    pub new_feed_url: TemplateChild<gtk::Entry>,
+    pub settings: gio::Settings,
+  }
+
+  impl Default for Window {
+    fn default() -> Self {
+      Self {
+        leaflet: TemplateChild::default(),
+        feed_list: TemplateChild::default(),
+        add_button: TemplateChild::default(),
+        header_label: TemplateChild::default(),
+        feed_details: TemplateChild::default(),
+        new_feed_title: TemplateChild::default(),
+        new_feed_url: TemplateChild::default(),
+        settings: gio::Settings::new(config::APP_ID),
+      }
+    }
+  }
+
+  #[glib::object_subclass]
+  impl ObjectSubclass for Window {
+    const NAME: &'static str = "Window";
+    type Type = super::Window;
+    type ParentType = adw::ApplicationWindow;
+
+    fn class_init(klass: &mut Self::Class) {
+      klass.bind_template();
+    }
+
+    fn instance_init(obj: &InitializingObject<Self>) {
+      obj.init_template();
+    }
+  }
+
+  impl ObjectImpl for Window {
+    fn constructed(&self, obj: &Self::Type) {
+      self.parent_constructed(obj);
+
+      obj.load_window_size();
+
+      self.feed_list.set_sort_func(|a, b| -> gtk::Ordering {
+        let a = a.downcast_ref::<adw::ActionRow>().unwrap().title();
+        let b = b.downcast_ref::<adw::ActionRow>().unwrap().title();
+
+        if a < b {
+          gtk::Ordering::Smaller
+        } else if a > b {
+          gtk::Ordering::Larger
+        } else {
+          gtk::Ordering::Equal
+        }
+      });
+    }
+  }
+
+  impl WidgetImpl for Window {}
+
+  impl WindowImpl for Window {
+    fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
+      if let Err(err) = window.save_window_size() {
+        println!("Failed to save window state, {}", &err);
+      }
+
+      // Pass close request on to the parent
+      self.parent_close_request(window)
+    }
+  }
+
+  impl ApplicationWindowImpl for Window {}
+
+  impl AdwApplicationWindowImpl for Window {}
 }

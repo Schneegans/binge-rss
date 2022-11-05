@@ -9,16 +9,8 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use serde::{Deserialize, Serialize};
-
 mod feed_item;
+mod feed_settings;
 
 pub use self::feed_item::FeedItem;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct FeedSettings {
-  pub title: String,
-  pub url: String,
-  pub viewed: String,
-  pub filter: Vec<String>,
-}
+pub use self::feed_settings::FeedSettings;
