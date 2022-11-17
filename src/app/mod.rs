@@ -203,8 +203,6 @@ mod imp {
         }
       }
 
-      window.select_first_feed();
-
       this.main_window().present();
     }
   }

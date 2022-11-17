@@ -29,15 +29,6 @@ impl Window {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
 
-  pub fn select_first_feed(&self) {
-    let child = self.imp().feed_list.first_child();
-
-    if child.is_some() {
-      let row = child.unwrap().downcast::<adw::ActionRow>().unwrap();
-      adw::prelude::ActionRowExt::activate(&row);
-    }
-  }
-
   pub fn get_selected_id(&self) -> Option<String> {
     match self.imp().feed_list.selected_row() {
       None => None,
@@ -60,6 +51,9 @@ impl Window {
   }
 
   pub fn add_feed(&self, id: String, title: String, url: String) {
+    self.imp().no_feeds_message.set_visible(false);
+    self.imp().leaflet.set_can_unfold(true);
+
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
@@ -82,6 +76,10 @@ impl Window {
         this.imp().header_label.set_label(&row.title());
       }),
     );
+
+    self.imp().feed_list.select_row(Some(&row));
+    self.imp().feed_details.set_visible_child(&item_list);
+    self.imp().header_label.set_label(&row.title());
 
     let handle = crate::RUNTIME.spawn(async move {
       let bytes = reqwest::get(&url).await?.bytes().await?;
@@ -193,13 +191,12 @@ impl Window {
 
     self.imp().header_label.set_label("");
 
-    self
-      .imp()
-      .feed_details
-      .set_visible_child_name("no_feeds_message");
-
     if next_row.is_some() {
       next_row.unwrap().activate();
+    } else {
+      self.imp().no_feeds_message.set_visible(true);
+      self.imp().leaflet.set_can_unfold(false);
+      self.show_feed_page();
     }
 
     if self.imp().leaflet.is_folded() {
@@ -218,14 +215,17 @@ impl Window {
   }
 
   pub fn show_feed_page(&self) {
-    self.imp().leaflet.set_visible_child_name("feed_list_page");
+    self
+      .imp()
+      .leaflet
+      .set_visible_child(&self.imp().feed_list_page.get());
   }
 
   pub fn show_details_page(&self) {
     self
       .imp()
       .leaflet
-      .set_visible_child_name("feed_details_page");
+      .set_visible_child(&self.imp().feed_details_page.get());
   }
 
   fn get_feed_content_page(&self, id: &String) -> Option<FeedContentPage> {
@@ -278,6 +278,10 @@ mod imp {
     #[template_child]
     pub leaflet: TemplateChild<adw::Leaflet>,
     #[template_child]
+    pub feed_list_page: TemplateChild<gtk::Box>,
+    #[template_child]
+    pub feed_details_page: TemplateChild<gtk::Box>,
+    #[template_child]
     pub feed_list: TemplateChild<gtk::ListBox>,
     #[template_child]
     pub add_button: TemplateChild<gtk::Button>,
@@ -289,6 +293,8 @@ mod imp {
     pub new_feed_title: TemplateChild<gtk::Entry>,
     #[template_child]
     pub new_feed_url: TemplateChild<gtk::Entry>,
+    #[template_child]
+    pub no_feeds_message: TemplateChild<adw::StatusPage>,
     pub settings: gio::Settings,
   }
 
@@ -296,12 +302,15 @@ mod imp {
     fn default() -> Self {
       Self {
         leaflet: TemplateChild::default(),
+        feed_list_page: TemplateChild::default(),
+        feed_details_page: TemplateChild::default(),
         feed_list: TemplateChild::default(),
         add_button: TemplateChild::default(),
         header_label: TemplateChild::default(),
         feed_details: TemplateChild::default(),
         new_feed_title: TemplateChild::default(),
         new_feed_url: TemplateChild::default(),
+        no_feeds_message: TemplateChild::default(),
         settings: gio::Settings::new(config::APP_ID),
       }
     }
