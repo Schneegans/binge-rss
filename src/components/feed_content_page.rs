@@ -15,7 +15,7 @@ use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, pango};
 use gtk::{glib, CompositeTemplate};
 
-use crate::model::FeedItem;
+use crate::components::FeedItem;
 
 glib::wrapper! {
   pub struct FeedContentPage(ObjectSubclass<imp::FeedContentPage>)
@@ -112,7 +112,7 @@ impl FeedContentPage {
   }
 
   pub fn get_filter(&self) -> String {
-    self.imp().name_filter.text().to_string()
+    self.imp().name_filter.text().into()
   }
 }
 

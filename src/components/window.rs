@@ -16,8 +16,8 @@ use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, glib, CompositeTemplate};
 
-use crate::model::FeedItem;
-use crate::view::FeedContentPage;
+use crate::components::FeedContentPage;
+use crate::components::FeedItem;
 
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
@@ -50,7 +50,7 @@ impl Window {
           .unwrap()
           .title()
           .as_str()
-          .to_string(),
+          .into(),
       ),
     }
   }
@@ -138,6 +138,8 @@ impl Window {
         })
         .collect();
 
+        item_list.set_items(items);
+
         if image.is_some() {
           let stream = gio::MemoryInputStream::from_bytes(&image.unwrap());
           let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
@@ -153,13 +155,11 @@ impl Window {
           let label = gtk::Label::builder()
             .label(&unread_count.to_string())
             .valign(gtk::Align::Center)
-            .css_classes(vec!["item-count-badge".to_string()])
+            .css_classes(vec!["item-count-badge".into()])
             .build();
 
           row.add_suffix(&label);
         }
-
-        item_list.set_items(items);
 
       } else {
         avatar.set_icon_name(Some("network-no-route-symbolic"));
@@ -225,11 +225,11 @@ impl Window {
   }
 
   pub fn get_new_feed_title(&self) -> String {
-    self.imp().new_feed_title.text().to_string()
+    self.imp().new_feed_title.text().into()
   }
 
   pub fn get_new_feed_url(&self) -> String {
-    self.imp().new_feed_url.text().to_string()
+    self.imp().new_feed_url.text().into()
   }
 
   pub fn show_feed_page(&self) {

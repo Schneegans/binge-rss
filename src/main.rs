@@ -9,12 +9,11 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-mod app;
+mod application;
+mod components;
 mod config;
-mod model;
-mod view;
 
-use app::Application;
+use application::Application;
 
 use adw::prelude::*;
 use gtk::{gdk, gio};
@@ -24,8 +23,10 @@ use once_cell::sync::Lazy;
 pub static RUNTIME: Lazy<tokio::runtime::Runtime> =
   Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
+// The main method of BingeRSS calls some initialization routines and finally runs an
+// instance of out custom application class.
 fn main() {
-  // Register and include resources
+  // Register and include resources. They have been precompiled by ../build.rs.
   gio::resources_register_include!("compiled.gresource").expect("register resources");
 
   // Initialize GTK and libadwaita.

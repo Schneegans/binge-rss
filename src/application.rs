@@ -12,11 +12,19 @@
 use adw::prelude::*;
 use glib::WeakRef;
 use gtk::{gio, glib, subclass::prelude::*};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 
+use crate::components::Window;
 use crate::config;
-use crate::model::FeedSettings;
-use crate::view::Window;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FeedSettings {
+  pub title: String,
+  pub url: String,
+  pub viewed: String,
+  pub filter: Vec<String>,
+}
 
 glib::wrapper! {
   pub struct Application(ObjectSubclass<imp::Application>)
@@ -77,11 +85,11 @@ impl Application {
           let feed_settings = FeedSettings {
             title: window.get_new_feed_title(),
             url: window.get_new_feed_url(),
-            viewed: "".to_string(),
+            viewed: "".into(),
             filter: vec![]
           };
 
-          window.add_feed("0".to_string(), feed_settings.title.clone(), feed_settings.url.clone());
+          window.add_feed("0".into(), feed_settings.title.clone(), feed_settings.url.clone());
           this.imp().feeds.borrow_mut().push(feed_settings);
         }),
       );

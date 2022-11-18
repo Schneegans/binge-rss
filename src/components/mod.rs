@@ -9,8 +9,10 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
+mod feed_content_page;
 mod feed_item;
-mod feed_settings;
+mod window;
 
+pub use self::feed_content_page::FeedContentPage;
 pub use self::feed_item::FeedItem;
-pub use self::feed_settings::FeedSettings;
+pub use self::window::Window;
