@@ -21,13 +21,18 @@ use crate::view::FeedContentPage;
 
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
-      @extends gtk::Widget, gtk::Window, adw::Window, @implements gtk::Accessible, gtk::Buildable;
+      @extends gtk::Widget, gtk::Window, adw::Window,
+      @implements gtk::Accessible, gtk::Buildable;
 }
 
 impl Window {
+  // ----------------------------------------------------------------- constructor methods
+
   pub fn new() -> Self {
     glib::Object::new(&[]).expect("Failed to create Window")
   }
+
+  // ---------------------------------------------------------------------- public methods
 
   pub fn get_selected_id(&self) -> Option<String> {
     match self.imp().feed_list.selected_row() {
@@ -106,7 +111,12 @@ impl Window {
 
       row.remove(&spinner);
 
-      let avatar = adw::Avatar::builder().text(&title).size(24).icon_name("rss-symbolic").build();
+      let avatar = adw::Avatar::builder()
+        .text(&title)
+        .size(24)
+        .icon_name("rss-symbolic")
+        .build();
+
       row.add_prefix(&avatar);
 
       if feed.is_ok() {
@@ -214,6 +224,14 @@ impl Window {
     self.get_feed_content_page(id).unwrap().get_filter()
   }
 
+  pub fn get_new_feed_title(&self) -> String {
+    self.imp().new_feed_title.text().to_string()
+  }
+
+  pub fn get_new_feed_url(&self) -> String {
+    self.imp().new_feed_url.text().to_string()
+  }
+
   pub fn show_feed_page(&self) {
     self
       .imp()
@@ -227,6 +245,8 @@ impl Window {
       .leaflet
       .set_visible_child(&self.imp().feed_details_page.get());
   }
+
+  // --------------------------------------------------------------------- private methods
 
   fn get_feed_content_page(&self, id: &String) -> Option<FeedContentPage> {
     let page = self.imp().feed_details.child_by_name(id.as_str());

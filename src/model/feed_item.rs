@@ -16,9 +16,13 @@ glib::wrapper! {
 }
 
 impl FeedItem {
+  // ----------------------------------------------------------------- constructor methods
+
   pub fn new(title: String, url: String) -> Self {
     glib::Object::new(&[("title", &title), ("url", &url)]).expect("creating 'FeedItem'")
   }
+
+  // ---------------------------------------------------------------------- public methods
 
   pub fn get_title(&self) -> String {
     self.imp().title.borrow().clone()
@@ -65,7 +69,13 @@ mod imp {
       PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+    fn set_property(
+      &self,
+      _obj: &Self::Type,
+      _id: usize,
+      value: &Value,
+      pspec: &ParamSpec,
+    ) {
       match pspec.name() {
         "title" => {
           self.title.replace(

@@ -25,10 +25,14 @@ glib::wrapper! {
 }
 
 impl Application {
+  // ----------------------------------------------------------------- constructor methods
+
   pub fn new() -> Self {
     glib::Object::new(&[("application-id", &Some(config::APP_ID))])
       .expect("Application initialization failed")
   }
+
+  // --------------------------------------------------------------------- private methods
 
   fn main_window(&self) -> Window {
     self.imp().window.upgrade().unwrap()
@@ -68,9 +72,19 @@ impl Application {
 
     {
       let action = gio::SimpleAction::new("add-feed", None);
-      action.connect_activate(move |_, _| {
-        println!("add");
-      });
+      action.connect_activate(
+        glib::clone!(@weak self as this, @weak window => move |_, _| {
+          let feed_settings = FeedSettings {
+            title: window.get_new_feed_title(),
+            url: window.get_new_feed_url(),
+            viewed: "".to_string(),
+            filter: vec![]
+          };
+
+          window.add_feed("0".to_string(), feed_settings.title.clone(), feed_settings.url.clone());
+          this.imp().feeds.borrow_mut().push(feed_settings);
+        }),
+      );
       self.add_action(&action);
     }
 

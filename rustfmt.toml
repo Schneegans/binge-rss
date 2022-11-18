@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: CC0-1.0
 
 tab_spaces = 2
+max_width = 90

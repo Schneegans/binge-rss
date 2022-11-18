@@ -19,13 +19,18 @@ use crate::model::FeedItem;
 
 glib::wrapper! {
   pub struct FeedContentPage(ObjectSubclass<imp::FeedContentPage>)
-      @extends gtk::Widget, gtk::Box, @implements gtk::Accessible, gtk::Buildable, gtk::Orientable;
+      @extends gtk::Widget, gtk::Box,
+      @implements gtk::Accessible, gtk::Buildable, gtk::Orientable;
 }
 
 impl FeedContentPage {
+  // ----------------------------------------------------------------- constructor methods
+
   pub fn new() -> Self {
     glib::Object::new(&[]).expect("Failed to create FeedContentPage")
   }
+
+  // ---------------------------------------------------------------------- public methods
 
   pub fn set_connection_failed(&self) {
     self.imp().connection_error.set_visible(true);
@@ -94,7 +99,8 @@ impl FeedContentPage {
     self.imp().model.remove_all();
     self.imp().model.extend_from_slice(&items);
 
-    let filter_model = gtk::FilterListModel::new(Some(&self.imp().model), Some(&self.imp().filter));
+    let filter_model =
+      gtk::FilterListModel::new(Some(&self.imp().model), Some(&self.imp().filter));
     let selection_model = gtk::NoSelection::new(Some(&filter_model));
     self.imp().view.set_model(Some(&selection_model));
     self.imp().view.set_factory(Some(&factory));
@@ -179,7 +185,8 @@ mod imp {
           .downcast::<FeedItem>()
           .unwrap();
         let url = item.get_url();
-        let result = gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+        let result =
+          gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
         if result.is_err() {
           println!("Failed to open URL {}", url);
         }
