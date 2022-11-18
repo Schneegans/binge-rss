@@ -34,7 +34,8 @@ fn main() {
 
   // Add our custom icons to the icon theme.
   let display = gdk::Display::default().expect("get default gdk::Display");
-  gtk::IconTheme::for_display(&display).add_resource_path("/io/github/schneegans/BingeRSS");
+  gtk::IconTheme::for_display(&display)
+    .add_resource_path("/io/github/schneegans/BingeRSS");
 
   // Create the app and run it!
   let application = Application::new();
