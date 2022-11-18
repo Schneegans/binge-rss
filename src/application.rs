@@ -18,14 +18,29 @@ use std::cell::RefCell;
 use crate::components::Window;
 use crate::config;
 
+// ---------------------------------------------------------------------------------------
+// The FeedSettings are used for storing the currently configured feeds in the settings.
+// An array of such structs is converted from and to JSON using serde and stored under the
+// GSettings key /io/github/schneegans/BingeRSS/feeds.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FeedSettings {
+  // The user-defined name of the feed.
   pub title: String,
+
+  // The URL to the feed xml.
   pub url: String,
+
+  // The date at which the user last viewed the feed. This is used to compute the number
+  // of new feed items.
   pub viewed: String,
+
+  // The currently configured filters for this feed.
   pub filter: Vec<String>,
 }
 
+// ---------------------------------------------------------------------------------------
+// The application of BingeRSS is derived from adw::Application. It does not have any
+// additional public methods; all the setup happens in the overridden activate() methods.
 glib::wrapper! {
   pub struct Application(ObjectSubclass<imp::Application>)
     @extends gio::Application, gtk::Application, adw::Application,
@@ -33,15 +48,13 @@ glib::wrapper! {
 }
 
 impl Application {
-  // ----------------------------------------------------------------- constructor methods
-
+  // Creates a new instance of the application class.
   pub fn new() -> Self {
     glib::Object::new(&[("application-id", &Some(config::APP_ID))])
       .expect("Application initialization failed")
   }
 
-  // --------------------------------------------------------------------- private methods
-
+  // Returns the current main window of the application.
   fn main_window(&self) -> Window {
     self.imp().window.upgrade().unwrap()
   }
