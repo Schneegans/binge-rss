@@ -17,6 +17,12 @@ A mimalistic RSS reader for fast, filtered, high-volume news feeds.
 
 ## Local Installation
 
+### Download Dependencies
+
+```bash
+sudo apt install meson libgtk-4-dev libadwaita-1-dev desktop-file-utils
+```
+
 ### Building
 
 ```bash
