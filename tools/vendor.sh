@@ -6,16 +6,12 @@
 #                                      |___/                                             #
 # -------------------------------------------------------------------------------------- #
 
-# SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
-# SPDX-License-Identifier: CC0-1.0
+#!/bin/bash
+export DIST="$1"
+export SOURCE_ROOT="$2"
 
-option(
-  'profile',
-  type: 'combo',
-  choices: [
-    'release',
-    'develop'
-  ],
-  value: 'develop',
-  description: 'The build profile for BingeRSS. One of "develop" or "release".'
-)
+cd "$SOURCE_ROOT"
+mkdir "$DIST"/.cargo
+cargo vendor | sed 's/^directory = ".*"/directory = "vendor"/g' > $DIST/.cargo/config
+mv vendor "$DIST"
+

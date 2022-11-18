@@ -1,10 +1,10 @@
-##########################################################################################
+# -------------------------------------------------------------------------------------- #
 #                            ___ _               ___  ___ ___                            #
 #                           | _ |_)_ _  __ _ ___| _ \/ __/ __|                           #
 #                           | _ \ | ' \/ _` / -_)   /\__ \__ \                           #
 #                           |___/_|_||_\__, \___|_|_\|___/___/                           #
 #                                      |___/                                             #
-##########################################################################################
+# -------------------------------------------------------------------------------------- #
 
 # SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 # SPDX-License-Identifier: MIT
@@ -50,7 +50,7 @@ iconsdir = datadir / 'icons'
 # pkgdatadir = datadir / meson.project_name()
 
 meson.add_dist_script(
-  'build-aux/vendor.sh',
+  'tools/vendor.sh',
   meson.project_build_root() / 'meson-dist' / meson.project_name() + '-' + version,
   meson.project_source_root()
 )

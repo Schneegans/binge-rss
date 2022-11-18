@@ -11,6 +11,7 @@
 
 use gtk::gio;
 
+// This is used to compile the resources into the binary during a pre-build step.
 fn main() {
   gio::compile_resources(
     "data/resources",
