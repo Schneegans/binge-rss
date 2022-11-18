@@ -18,7 +18,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Build
+       - name: Download Dependencies
+      run: |
+        sudo apt update -qq
+        sudo apt install meson -qq
+      - name: Build BingeRSS
         run: meson setup build
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
