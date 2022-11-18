@@ -16,16 +16,16 @@ jobs:
     name: Check Formatting
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-       - name: Download Dependencies
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Download Dependencies
       run: |
         sudo apt update -qq
         sudo apt install meson -qq
-      - name: Build BingeRSS
-        run: meson setup build
-      - name: Run cargo fmt
-        run: cargo fmt --all -- --check
+    - name: Build BingeRSS
+      run: meson setup build
+    - name: Run cargo fmt
+      run: cargo fmt --all -- --check
 
   reuse:
     name: Check Compliance with REUSE Specification
