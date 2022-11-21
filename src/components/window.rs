@@ -55,7 +55,8 @@ impl Window {
     }
   }
 
-  pub fn add_feed(&self, id: String, title: String, url: String) {
+  pub fn add_feed(&self, id: String, title: String, url: String, filter: String) {
+    println!("add {}", id);
     self.imp().no_feeds_message.set_visible(false);
     self.imp().leaflet.set_can_unfold(true);
 
@@ -72,6 +73,9 @@ impl Window {
     row.add_prefix(&spinner);
 
     let item_list = FeedContentPage::new();
+    item_list.set_name(&title);
+    item_list.set_url(&url);
+    item_list.set_filter(&filter);
     self.imp().feed_details.add_named(&item_list, Some(&id));
 
     row.connect_activated(
@@ -169,6 +173,22 @@ impl Window {
     }));
   }
 
+  pub fn show_toast(
+    &self,
+    title: &str,
+    button_label: &str,
+    action_name: &str,
+    action_target: glib::Variant,
+  ) {
+    let toast = adw::Toast::builder()
+      .title(title)
+      .action_name(action_name)
+      .action_target(&action_target)
+      .button_label(button_label)
+      .build();
+    self.imp().toast_overlay.add_toast(&toast);
+  }
+
   pub fn remove_selected_feed(&self) -> Option<String> {
     let list = &self.imp().feed_list;
     let row = list.selected_row()?;
@@ -216,21 +236,13 @@ impl Window {
     Some(id)
   }
 
-  pub fn set_filter(&self, id: &String, filter: &String) {
-    self.get_feed_content_page(id).unwrap().set_filter(filter);
-  }
+  // pub fn set_filter(&self, id: &String, filter: &String) {
+  //   self.get_feed_content_page(id).unwrap().set_filter(filter);
+  // }
 
-  pub fn get_filter(&self, id: &String) -> String {
-    self.get_feed_content_page(id).unwrap().get_filter()
-  }
-
-  pub fn get_new_feed_title(&self) -> String {
-    self.imp().new_feed_title.text().into()
-  }
-
-  pub fn get_new_feed_url(&self) -> String {
-    self.imp().new_feed_url.text().into()
-  }
+  // pub fn get_filter(&self, id: &String) -> String {
+  //   self.get_feed_content_page(id).unwrap().get_filter()
+  // }
 
   pub fn show_feed_page(&self) {
     self
@@ -296,6 +308,8 @@ mod imp {
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/Window.ui")]
   pub struct Window {
     #[template_child]
+    pub toast_overlay: TemplateChild<adw::ToastOverlay>,
+    #[template_child]
     pub leaflet: TemplateChild<adw::Leaflet>,
     #[template_child]
     pub feed_list_page: TemplateChild<gtk::Box>,
@@ -304,15 +318,9 @@ mod imp {
     #[template_child]
     pub feed_list: TemplateChild<gtk::ListBox>,
     #[template_child]
-    pub add_button: TemplateChild<gtk::Button>,
-    #[template_child]
     pub header_label: TemplateChild<gtk::Label>,
     #[template_child]
     pub feed_details: TemplateChild<gtk::Stack>,
-    #[template_child]
-    pub new_feed_title: TemplateChild<gtk::Entry>,
-    #[template_child]
-    pub new_feed_url: TemplateChild<gtk::Entry>,
     #[template_child]
     pub no_feeds_message: TemplateChild<adw::StatusPage>,
     pub settings: gio::Settings,
@@ -321,15 +329,13 @@ mod imp {
   impl Default for Window {
     fn default() -> Self {
       Self {
+        toast_overlay: TemplateChild::default(),
         leaflet: TemplateChild::default(),
         feed_list_page: TemplateChild::default(),
         feed_details_page: TemplateChild::default(),
         feed_list: TemplateChild::default(),
-        add_button: TemplateChild::default(),
         header_label: TemplateChild::default(),
         feed_details: TemplateChild::default(),
-        new_feed_title: TemplateChild::default(),
-        new_feed_url: TemplateChild::default(),
         no_feeds_message: TemplateChild::default(),
         settings: gio::Settings::new(config::APP_ID),
       }

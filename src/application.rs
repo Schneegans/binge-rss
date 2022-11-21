@@ -11,6 +11,7 @@
 
 use adw::prelude::*;
 use glib::WeakRef;
+use gtk::glib::FromVariant;
 use gtk::{gio, glib, subclass::prelude::*};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -35,7 +36,10 @@ pub struct FeedSettings {
   pub viewed: String,
 
   // The currently configured filters for this feed.
-  pub filter: Vec<String>,
+  pub filter: String,
+
+  #[serde(skip)]
+  pub id: String,
 }
 
 // ---------------------------------------------------------------------------------------
@@ -96,13 +100,16 @@ impl Application {
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, _| {
           let feed_settings = FeedSettings {
-            title: window.get_new_feed_title(),
-            url: window.get_new_feed_url(),
+            title: "New Feed".into(),
+            url: "".into(),
             viewed: "".into(),
-            filter: vec![]
+            filter: "".into(),
+            id: this.imp().next_feed_id.borrow().to_string()
           };
 
-          window.add_feed("0".into(), feed_settings.title.clone(), feed_settings.url.clone());
+          *this.imp().next_feed_id.borrow_mut() += 1;
+
+          window.add_feed(feed_settings.id.clone(), feed_settings.title.clone(), feed_settings.url.clone(), feed_settings.filter.clone());
           this.imp().feeds.borrow_mut().push(feed_settings);
         }),
       );
@@ -111,26 +118,32 @@ impl Application {
 
     {
       let action = gio::SimpleAction::new("remove-feed", None);
-      action.connect_activate(glib::clone!(@weak window => move |_, _| {
-        let dialog = adw::MessageDialog::builder()
-          .heading(&format!("Remove the feed '{}'?", window.get_selected_title().unwrap()))
-          .default_response("remove")
-          .close_response("cancel")
-          .transient_for(&window)
-          .modal(true)
-          .build();
-          dialog.add_response("cancel", "Cancel");
-          dialog.add_response("remove", "Remove");
-          dialog.set_response_appearance("remove", adw::ResponseAppearance::Destructive);
+      action.connect_activate(
+        glib::clone!(@weak self as this, @weak window => move |_, _| {
+          let id = window.remove_selected_feed();
 
-          dialog.connect_response(Some("remove"), move |_,_| {
-            let id = window.remove_selected_feed();
+          if id.is_some() {
+            let i = this.imp().feeds.borrow().iter().position(|f| f.id.eq(id.as_ref().unwrap())).unwrap();
+            window.show_toast(format!("Removed '{}'", this.imp().feeds.borrow()[i].title).as_str(), "Undo", "app.undo-remove", id.unwrap().to_variant());
+            this.imp().removed_feeds.borrow_mut().push(this.imp().feeds.borrow_mut().remove(i));
+          }
+        }),
+      );
+      self.add_action(&action);
+    }
 
-            println!("removed {:?}", id);
-          });
-
-        dialog.show();
-      }));
+    {
+      let action = gio::SimpleAction::new("undo-remove", Some(glib::VariantTy::STRING));
+      action.connect_activate(
+        glib::clone!(@weak self as this, @weak window => move |_, id| {
+            if id.is_some() {
+              let i = this.imp().removed_feeds.borrow().iter().position(|f| f.id.eq(&String::from_variant(id.unwrap()).unwrap())).unwrap();
+              let feed_settings = this.imp().removed_feeds.borrow_mut().remove(i);
+              window.add_feed(feed_settings.id.clone(), feed_settings.title.clone(), feed_settings.url.clone(), feed_settings.filter.clone());
+              this.imp().feeds.borrow_mut().push(feed_settings);
+            }
+        }),
+      );
       self.add_action(&action);
     }
 
@@ -180,6 +193,8 @@ mod imp {
     pub window: WeakRef<Window>,
     pub settings: gio::Settings,
     pub feeds: RefCell<Vec<FeedSettings>>,
+    pub removed_feeds: RefCell<Vec<FeedSettings>>,
+    pub next_feed_id: RefCell<u32>,
   }
 
   impl Default for Application {
@@ -188,6 +203,8 @@ mod imp {
         window: Default::default(),
         settings: gio::Settings::new(config::APP_ID),
         feeds: RefCell::new(vec![]),
+        removed_feeds: RefCell::new(vec![]),
+        next_feed_id: RefCell::new(0),
       }
     }
   }
@@ -230,12 +247,16 @@ mod imp {
       this.setup_actions();
       this.load_data();
 
-      for (i, feed) in self.feeds.borrow().iter().enumerate() {
-        window.add_feed(i.to_string(), feed.title.clone(), feed.url.clone());
+      for feed in self.feeds.borrow_mut().iter_mut() {
+        feed.id = self.next_feed_id.borrow().to_string();
+        window.add_feed(
+          feed.id.clone(),
+          feed.title.clone(),
+          feed.url.clone(),
+          feed.filter.clone(),
+        );
 
-        if feed.filter.len() > 0 {
-          window.set_filter(&i.to_string(), &feed.filter[0]);
-        }
+        *self.next_feed_id.borrow_mut() += 1;
       }
 
       this.main_window().present();

@@ -107,12 +107,28 @@ impl FeedContentPage {
     self.imp().view.set_css_classes(&["card"]);
   }
 
+  pub fn set_name(&self, name: &String) {
+    self.imp().feed_name.set_text(name);
+  }
+
+  pub fn get_name(&self) -> String {
+    self.imp().feed_name.text().into()
+  }
+
+  pub fn set_url(&self, url: &String) {
+    self.imp().feed_url.set_text(url);
+  }
+
+  pub fn get_url(&self) -> String {
+    self.imp().feed_url.text().into()
+  }
+
   pub fn set_filter(&self, filter: &String) {
-    self.imp().name_filter.set_text(filter);
+    self.imp().feed_filter.set_text(filter);
   }
 
   pub fn get_filter(&self) -> String {
-    self.imp().name_filter.text().into()
+    self.imp().feed_filter.text().into()
   }
 }
 
@@ -123,7 +139,11 @@ mod imp {
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
   pub struct FeedContentPage {
     #[template_child]
-    pub name_filter: TemplateChild<adw::EntryRow>,
+    pub feed_name: TemplateChild<adw::EntryRow>,
+    #[template_child]
+    pub feed_url: TemplateChild<adw::EntryRow>,
+    #[template_child]
+    pub feed_filter: TemplateChild<adw::EntryRow>,
     #[template_child]
     pub view: TemplateChild<gtk::ListView>,
     #[template_child]
@@ -136,7 +156,9 @@ mod imp {
   impl Default for FeedContentPage {
     fn default() -> Self {
       Self {
-        name_filter: TemplateChild::default(),
+        feed_name: TemplateChild::default(),
+        feed_url: TemplateChild::default(),
+        feed_filter: TemplateChild::default(),
         view: TemplateChild::default(),
         connection_error: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
@@ -193,7 +215,7 @@ mod imp {
       });
 
       self
-        .name_filter
+        .feed_filter
         .connect_changed(glib::clone!(@weak obj => move |entry| {
           obj.imp().filter.set_search(Some(&entry.text()));
         }));
