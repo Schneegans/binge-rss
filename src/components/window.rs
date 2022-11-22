@@ -16,6 +16,7 @@ use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, glib, CompositeTemplate};
 
+use crate::components::Feed;
 use crate::components::FeedContentPage;
 use crate::components::FeedItem;
 
@@ -55,28 +56,36 @@ impl Window {
     }
   }
 
-  pub fn add_feed(&self, id: String, title: String, url: String, filter: String) {
-    println!("add {}", id);
+  pub fn add_feed(&self, feed: &Feed) {
+    println!("add {}", feed.get_id());
     self.imp().no_feeds_message.set_visible(false);
     self.imp().leaflet.set_can_unfold(true);
 
     let row = adw::ActionRow::builder()
       .activatable(true)
       .selectable(true)
-      .name(&id)
-      .title(&title)
+      .name(&feed.get_id())
       .build();
     self.imp().feed_list.append(&row);
+
+    feed
+      .bind_property("title", &row, "title")
+      .flags(glib::BindingFlags::SYNC_CREATE)
+      .build();
+    feed
+      .bind_property("title", &self.imp().header_label.get(), "label")
+      .build();
 
     let spinner = gtk::Spinner::new();
     spinner.start();
     row.add_prefix(&spinner);
 
     let item_list = FeedContentPage::new();
-    item_list.set_name(&title);
-    item_list.set_url(&url);
-    item_list.set_filter(&filter);
-    self.imp().feed_details.add_named(&item_list, Some(&id));
+    item_list.set_feed(feed);
+    self
+      .imp()
+      .feed_details
+      .add_named(&item_list, Some(&feed.get_id()));
 
     row.connect_activated(
       glib::clone!(@weak self as this, @weak item_list => move |row| {
@@ -90,8 +99,10 @@ impl Window {
     self.imp().feed_details.set_visible_child(&item_list);
     self.imp().header_label.set_label(&row.title());
 
+    let url_copy = feed.get_url().clone();
+
     let handle = crate::RUNTIME.spawn(async move {
-      let bytes = reqwest::get(&url).await?.bytes().await?;
+      let bytes = reqwest::get(&url_copy).await?.bytes().await?;
       let content = feed_rs::parser::parse(&bytes[..])?;
 
       let url = url::Url::parse(&content.links[0].href);
@@ -109,23 +120,23 @@ impl Window {
     });
 
     let ctx = glib::MainContext::default();
-    ctx.spawn_local(glib::clone!(@weak self as this => async move {
+    ctx.spawn_local(glib::clone!(@weak self as this, @weak feed => async move {
 
-      let feed = handle.await.unwrap();
+      let result = handle.await.unwrap();
 
       row.remove(&spinner);
 
       let avatar = adw::Avatar::builder()
-        .text(&title)
+        .text(&feed.get_title())
         .size(24)
         .icon_name("rss-symbolic")
         .build();
 
       row.add_prefix(&avatar);
 
-      if feed.is_ok() {
+      if result.is_ok() {
 
-        let (content, image) = feed.unwrap();
+        let (content, image) = result.unwrap();
 
         let items = content.entries
         .iter()

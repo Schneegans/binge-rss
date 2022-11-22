@@ -13,34 +13,12 @@ use adw::prelude::*;
 use glib::WeakRef;
 use gtk::glib::FromVariant;
 use gtk::{gio, glib, subclass::prelude::*};
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 
+use crate::components::Feed;
+use crate::components::StoredFeed;
 use crate::components::Window;
 use crate::config;
-
-// ---------------------------------------------------------------------------------------
-// The FeedSettings are used for storing the currently configured feeds in the settings.
-// An array of such structs is converted from and to JSON using serde and stored under the
-// GSettings key /io/github/schneegans/BingeRSS/feeds.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct FeedSettings {
-  // The user-defined name of the feed.
-  pub title: String,
-
-  // The URL to the feed xml.
-  pub url: String,
-
-  // The date at which the user last viewed the feed. This is used to compute the number
-  // of new feed items.
-  pub viewed: String,
-
-  // The currently configured filters for this feed.
-  pub filter: String,
-
-  #[serde(skip)]
-  pub id: String,
-}
 
 // ---------------------------------------------------------------------------------------
 // The application of BingeRSS is derived from adw::Application. It does not have any
@@ -99,18 +77,19 @@ impl Application {
       let action = gio::SimpleAction::new("add-feed", None);
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, _| {
-          let feed_settings = FeedSettings {
-            title: "New Feed".into(),
-            url: "".into(),
-            viewed: "".into(),
-            filter: "".into(),
-            id: this.imp().next_feed_id.borrow().to_string()
-          };
+          let feed = Feed::new(
+             &"New Feed".into(),
+             &"".into(),
+             &"".into(),
+             &"".into()
+          );
+
+          feed.set_id(this.imp().next_feed_id.borrow().to_string());
 
           *this.imp().next_feed_id.borrow_mut() += 1;
 
-          window.add_feed(feed_settings.id.clone(), feed_settings.title.clone(), feed_settings.url.clone(), feed_settings.filter.clone());
-          this.imp().feeds.borrow_mut().push(feed_settings);
+          window.add_feed(&feed);
+          this.imp().feeds.borrow_mut().push(feed);
         }),
       );
       self.add_action(&action);
@@ -123,8 +102,8 @@ impl Application {
           let id = window.remove_selected_feed();
 
           if id.is_some() {
-            let i = this.imp().feeds.borrow().iter().position(|f| f.id.eq(id.as_ref().unwrap())).unwrap();
-            window.show_toast(format!("Removed '{}'", this.imp().feeds.borrow()[i].title).as_str(), "Undo", "app.undo-remove", id.unwrap().to_variant());
+            let i = this.imp().feeds.borrow().iter().position(|f| f.get_id().eq(id.as_ref().unwrap())).unwrap();
+            window.show_toast(format!("Removed '{}'", this.imp().feeds.borrow()[i].get_title()).as_str(), "Undo", "app.undo-remove", id.unwrap().to_variant());
             this.imp().removed_feeds.borrow_mut().push(this.imp().feeds.borrow_mut().remove(i));
           }
         }),
@@ -137,10 +116,10 @@ impl Application {
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, id| {
             if id.is_some() {
-              let i = this.imp().removed_feeds.borrow().iter().position(|f| f.id.eq(&String::from_variant(id.unwrap()).unwrap())).unwrap();
-              let feed_settings = this.imp().removed_feeds.borrow_mut().remove(i);
-              window.add_feed(feed_settings.id.clone(), feed_settings.title.clone(), feed_settings.url.clone(), feed_settings.filter.clone());
-              this.imp().feeds.borrow_mut().push(feed_settings);
+              let i = this.imp().removed_feeds.borrow().iter().position(|f| f.get_id().eq(&String::from_variant(id.unwrap()).unwrap())).unwrap();
+              let feed = this.imp().removed_feeds.borrow_mut().remove(i);
+              window.add_feed(&feed);
+              this.imp().feeds.borrow_mut().push(feed);
             }
         }),
       );
@@ -158,14 +137,32 @@ impl Application {
 
   fn load_data(&self) {
     let data = self.imp().settings.string("feeds");
-    self
-      .imp()
-      .feeds
-      .replace(serde_json::from_str(data.as_str()).expect("valid json"));
+    let stored_feeds: Vec<StoredFeed> =
+      serde_json::from_str(data.as_str()).expect("valid json");
+
+    self.imp().feeds.replace(
+      stored_feeds
+        .iter()
+        .map(|f| Feed::new(&f.title, &f.url, &f.filter, &f.viewed))
+        .collect(),
+    );
   }
 
   fn save_data(&self) {
-    let json = serde_json::to_string(&self.imp().feeds).unwrap();
+    let stored_feeds: Vec<StoredFeed> = self
+      .imp()
+      .feeds
+      .borrow()
+      .iter()
+      .map(|f| StoredFeed {
+        title: f.get_title(),
+        url: f.get_url(),
+        filter: f.get_filter(),
+        viewed: f.get_viewed(),
+      })
+      .collect();
+
+    let json = serde_json::to_string(&stored_feeds).unwrap();
     self
       .imp()
       .settings
@@ -192,8 +189,8 @@ mod imp {
   pub struct Application {
     pub window: WeakRef<Window>,
     pub settings: gio::Settings,
-    pub feeds: RefCell<Vec<FeedSettings>>,
-    pub removed_feeds: RefCell<Vec<FeedSettings>>,
+    pub feeds: RefCell<Vec<Feed>>,
+    pub removed_feeds: RefCell<Vec<Feed>>,
     pub next_feed_id: RefCell<u32>,
   }
 
@@ -248,13 +245,8 @@ mod imp {
       this.load_data();
 
       for feed in self.feeds.borrow_mut().iter_mut() {
-        feed.id = self.next_feed_id.borrow().to_string();
-        window.add_feed(
-          feed.id.clone(),
-          feed.title.clone(),
-          feed.url.clone(),
-          feed.filter.clone(),
-        );
+        feed.set_id(self.next_feed_id.borrow().to_string());
+        window.add_feed(&feed);
 
         *self.next_feed_id.borrow_mut() += 1;
       }

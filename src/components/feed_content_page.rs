@@ -15,6 +15,7 @@ use gtk::subclass::prelude::*;
 use gtk::{gdk, gio, pango};
 use gtk::{glib, CompositeTemplate};
 
+use crate::components::Feed;
 use crate::components::FeedItem;
 
 glib::wrapper! {
@@ -31,6 +32,21 @@ impl FeedContentPage {
   }
 
   // ---------------------------------------------------------------------- public methods
+
+  pub fn set_feed(&self, feed: &Feed) {
+    feed
+      .bind_property("title", &self.imp().feed_name.get(), "text")
+      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
+      .build();
+    feed
+      .bind_property("url", &self.imp().feed_url.get(), "text")
+      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
+      .build();
+    feed
+      .bind_property("filter", &self.imp().feed_filter.get(), "text")
+      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
+      .build();
+  }
 
   pub fn set_connection_failed(&self) {
     self.imp().connection_error.set_visible(true);
@@ -105,30 +121,6 @@ impl FeedContentPage {
     self.imp().view.set_model(Some(&selection_model));
     self.imp().view.set_factory(Some(&factory));
     self.imp().view.set_css_classes(&["card"]);
-  }
-
-  pub fn set_name(&self, name: &String) {
-    self.imp().feed_name.set_text(name);
-  }
-
-  pub fn get_name(&self) -> String {
-    self.imp().feed_name.text().into()
-  }
-
-  pub fn set_url(&self, url: &String) {
-    self.imp().feed_url.set_text(url);
-  }
-
-  pub fn get_url(&self) -> String {
-    self.imp().feed_url.text().into()
-  }
-
-  pub fn set_filter(&self, filter: &String) {
-    self.imp().feed_filter.set_text(filter);
-  }
-
-  pub fn get_filter(&self) -> String {
-    self.imp().feed_filter.text().into()
   }
 }
 
