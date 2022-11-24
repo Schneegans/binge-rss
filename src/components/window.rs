@@ -116,10 +116,10 @@ impl Window {
       "download-finished",
       false,
       glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |success| {
-        let success = success[0].get::<bool>().unwrap();
+        let success = success[1].get::<bool>().unwrap();
 
-        feed_row.imp().spinner.set_visible(!success);
-        feed_row.imp().avatar.set_visible(success);
+        feed_row.imp().spinner.set_visible(false);
+        feed_row.imp().avatar.set_visible(true);
         feed_row.set_connection_failed(!success);
         feed_row.imp().badge.set_visible(success);
 
