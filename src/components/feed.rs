@@ -9,9 +9,12 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use std::error::Error;
+use std::{
+  cell::{Ref, RefCell},
+  error::Error,
+};
 
-use gtk::{gdk, glib, subclass::prelude::ObjectSubclassIsExt, gio};
+use gtk::{gdk, gio, glib, prelude::ObjectExt, subclass::prelude::ObjectSubclassIsExt};
 use serde::{Deserialize, Serialize};
 
 use crate::components::FeedItem;
@@ -50,7 +53,8 @@ impl Feed {
       .property("title", title)
       .property("url", url)
       .property("filter", filter)
-      .property("viewed", viewed).build()
+      .property("viewed", viewed)
+      .build()
   }
 
   // ---------------------------------------------------------------------- public methods
@@ -112,44 +116,45 @@ impl Feed {
           }
         }
 
-        println!("Success {}", this.imp().title.borrow());
-        
-        // Emit success
-        
+        this.emit_by_name::<()>("download-succeeded", &[]);
       } else {
-        println!("Fail {}", this.imp().title.borrow());
-        // Emit fail
+        this.emit_by_name::<()>("download-failed", &[]);
       }
     }));
   }
 
-  pub fn get_title(&self) -> String {
-    self.imp().title.borrow().clone()
+  pub fn get_title(&self) -> Ref<String> {
+    self.imp().title.borrow()
   }
 
-  pub fn get_url(&self) -> String {
-    self.imp().url.borrow().clone()
+  pub fn get_url(&self) -> Ref<String> {
+    self.imp().url.borrow()
   }
 
-  pub fn get_filter(&self) -> String {
-    self.imp().filter.borrow().clone()
+  pub fn get_filter(&self) -> Ref<String> {
+    self.imp().filter.borrow()
   }
 
-  pub fn get_viewed(&self) -> String {
-    self.imp().viewed.borrow().clone()
+  pub fn get_viewed(&self) -> Ref<String> {
+    self.imp().viewed.borrow()
   }
 
-  pub fn get_id(&self) -> String {
-    self.imp().id.borrow().clone()
+  pub fn get_id(&self) -> Ref<String> {
+    self.imp().id.borrow()
+  }
+
+  pub fn get_items(&self) -> Ref<Vec<FeedItem>> {
+    self.imp().items.borrow()
+  }
+
+  pub fn get_icon(&self) -> Ref<Option<gdk::Paintable>> {
+    self.imp().icon.borrow()
   }
 }
 
 mod imp {
-  use gtk::{prelude::ToValue, glib::subclass::Signal};
-  use std::{
-    cell::RefCell,
-    sync::atomic::{AtomicUsize, Ordering},
-  };
+  use gtk::{glib::subclass::Signal, prelude::ToValue};
+  use std::sync::atomic::{AtomicUsize, Ordering};
 
   use glib::{ParamSpec, ParamSpecString, Value};
   use gtk::subclass::prelude::*;
@@ -164,7 +169,7 @@ mod imp {
     pub url: RefCell<String>,
     pub filter: RefCell<String>,
     pub viewed: RefCell<String>,
-    
+
     pub id: RefCell<String>,
     pub items: RefCell<Vec<FeedItem>>,
     pub icon: RefCell<Option<gdk::Paintable>>,
@@ -202,19 +207,15 @@ mod imp {
 
     fn signals() -> &'static [Signal] {
       static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-          vec![
-            Signal::builder("download-failed").build()
-          ]
+        vec![
+          Signal::builder("download-failed").build(),
+          Signal::builder("download-succeeded").build(),
+        ]
       });
       SIGNALS.as_ref()
-  }
+    }
 
-    fn set_property(
-      &self,
-      _id: usize,
-      value: &Value,
-      pspec: &ParamSpec,
-    ) {
+    fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
       match pspec.name() {
         "title" => {
           self.title.replace(
@@ -248,7 +249,7 @@ mod imp {
       }
     }
 
-    fn property(&self,  _id: usize, pspec: &ParamSpec) -> Value {
+    fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),

@@ -65,7 +65,7 @@ impl FeedContentPage {
     self.imp().view.set_visible(false);
   }
 
-  pub fn set_items(&self, items: Vec<FeedItem>) {
+  pub fn set_items(&self, items: &Vec<FeedItem>) {
     self.imp().connection_error_message.set_visible(false);
     self.imp().view.set_visible(true);
 

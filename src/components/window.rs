@@ -94,20 +94,39 @@ impl Window {
     self.imp().feed_details.set_visible_child(&feed_page);
     self.imp().header_label.set_label(&feed_row.title());
 
+    feed.connect_local(
+      "download-failed",
+      false,
+      glib::clone!(@weak feed_row, @weak feed_page => @default-return None, move |_| {
+        feed_row.imp().spinner.set_visible(false);
+        feed_row.imp().avatar.set_visible(true);
+
+        feed_row.set_connection_failed();
+        feed_page.set_connection_failed();
+
+        None
+      }),
+    );
+
+    feed.connect_local(
+      "download-succeeded",
+      false,
+      glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |_| {
+        feed_row.imp().spinner.set_visible(false);
+        feed_row.imp().avatar.set_visible(true);
+
+        feed_row
+          .imp()
+          .avatar
+          .set_custom_image(feed.get_icon().as_ref());
+        feed_page.set_items(feed.get_items().as_ref());
+        feed_row.imp().badge.set_visible(true);
+
+        None
+      }),
+    );
+
     feed.download();
-
-    // in all cases
-    // feed_row.imp().spinner.set_visible(false);
-    // feed_row.imp().avatar.set_visible(true);
-
-    // on succes
-    // feed_row.imp().avatar.set_custom_image(Some(&image.paintable().unwrap()));
-    // feed_page.set_items(items);
-    // feed_row.imp().badge.set_visible(true);
-
-    // on fail
-    // feed_row.set_connection_failed();
-    // feed_page.set_connection_failed();
 
     self.imp().feed_list.invalidate_sort();
   }

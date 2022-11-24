@@ -152,10 +152,10 @@ impl Application {
       .borrow()
       .iter()
       .map(|f| StoredFeed {
-        title: f.get_title(),
-        url: f.get_url(),
-        filter: f.get_filter(),
-        viewed: f.get_viewed(),
+        title: f.get_title().clone(),
+        url: f.get_url().clone(),
+        filter: f.get_filter().clone(),
+        viewed: f.get_viewed().clone(),
       })
       .collect();
 
