@@ -75,6 +75,13 @@ impl Window {
       }),
     );
 
+    feed.connect_notify_local(
+      Some("url"),
+      glib::clone!(@weak feed => move |_, _| {
+        feed.download();
+      }),
+    );
+
     let feed_page = FeedContentPage::new();
     feed_page.set_feed(feed);
     self
@@ -95,14 +102,33 @@ impl Window {
     self.imp().header_label.set_label(&feed_row.title());
 
     feed.connect_local(
+      "download-started",
+      false,
+      glib::clone!(@weak feed_row => @default-return None, move |_| {
+        feed_row.imp().spinner.set_visible(true);
+        feed_row.imp().avatar.set_visible(false);
+
+        None
+      }),
+    );
+
+    feed.connect_local(
       "download-failed",
       false,
-      glib::clone!(@weak feed_row, @weak feed_page => @default-return None, move |_| {
+      glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |_| {
         feed_row.imp().spinner.set_visible(false);
         feed_row.imp().avatar.set_visible(true);
 
-        feed_row.set_connection_failed();
+        feed_row
+          .imp()
+          .avatar
+          .set_custom_image(feed.get_icon().as_ref());
+        feed_page.set_items(feed.get_items().as_ref());
+
+        feed_row.set_connection_failed(true);
         feed_page.set_connection_failed();
+
+        feed_row.imp().badge.set_visible(false);
 
         None
       }),
@@ -120,6 +146,8 @@ impl Window {
           .avatar
           .set_custom_image(feed.get_icon().as_ref());
         feed_page.set_items(feed.get_items().as_ref());
+        feed_row.set_connection_failed(false);
+
         feed_row.imp().badge.set_visible(true);
 
         None

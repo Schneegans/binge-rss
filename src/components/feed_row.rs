@@ -42,12 +42,13 @@ impl FeedRow {
       .build();
   }
 
-  pub fn set_connection_failed(&self) {
-    self
-      .imp()
-      .avatar
-      .set_icon_name(Some("network-no-route-symbolic"));
-    self.set_subtitle("Connection failed.");
+  pub fn set_connection_failed(&self, failed: bool) {
+    self.imp().avatar.set_icon_name(Some(if failed {
+      "network-no-route-symbolic"
+    } else {
+      "rss-symbolic"
+    }));
+    self.set_subtitle(if failed { "Connection failed." } else { "" });
   }
 }
 

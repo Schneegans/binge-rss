@@ -60,6 +60,16 @@ impl Feed {
   // ---------------------------------------------------------------------- public methods
 
   pub fn download(&self) {
+    if self.imp().download_source_id.borrow().is_some() {
+      let source_id = self.imp().download_source_id.borrow_mut().take();
+      source_id.unwrap().remove();
+    }
+
+    self.emit_by_name::<()>("download-started", &[]);
+
+    self.imp().icon.replace(None);
+    self.imp().items.replace(vec![]);
+
     let url_copy = self.imp().url.borrow().clone();
 
     let handle = crate::RUNTIME.spawn(async move {
@@ -81,9 +91,12 @@ impl Feed {
     });
 
     let ctx = glib::MainContext::default();
-    ctx.spawn_local(glib::clone!(@weak self as this => async move {
+    self.imp().download_source_id.replace(
+      Some(ctx.spawn_local(glib::clone!(@weak self as this => async move {
 
       let result = handle.await.unwrap();
+
+      this.imp().download_source_id.replace(None);
 
       if result.is_ok() {
 
@@ -120,7 +133,7 @@ impl Feed {
       } else {
         this.emit_by_name::<()>("download-failed", &[]);
       }
-    }));
+    }))));
   }
 
   pub fn get_title(&self) -> Ref<String> {
@@ -153,7 +166,10 @@ impl Feed {
 }
 
 mod imp {
-  use gtk::{glib::subclass::Signal, prelude::ToValue};
+  use gtk::{
+    glib::{subclass::Signal, SourceId},
+    prelude::ToValue,
+  };
   use std::sync::atomic::{AtomicUsize, Ordering};
 
   use glib::{ParamSpec, ParamSpecString, Value};
@@ -173,6 +189,8 @@ mod imp {
     pub id: RefCell<String>,
     pub items: RefCell<Vec<FeedItem>>,
     pub icon: RefCell<Option<gdk::Paintable>>,
+
+    pub download_source_id: RefCell<Option<SourceId>>,
   }
 
   // The central trait for subclassing a GObject
@@ -208,6 +226,7 @@ mod imp {
     fn signals() -> &'static [Signal] {
       static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
         vec![
+          Signal::builder("download-started").build(),
           Signal::builder("download-failed").build(),
           Signal::builder("download-succeeded").build(),
         ]
