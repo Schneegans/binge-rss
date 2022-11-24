@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
     <file compressed="true">style.css</file>
     <file compressed="true" preprocess="xml-stripblanks">scalable/actions/rss-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/FeedContentPage.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/FeedRow.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">ui/Window.ui</file>
   </gresource>
 </gresources>

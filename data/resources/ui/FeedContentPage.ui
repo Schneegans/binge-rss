@@ -21,18 +21,6 @@ SPDX-License-Identifier: MIT
               <object class="GtkBox">
                 <property name="orientation">vertical</property>
 
-                <!-- <child>
-                  <object class="GtkLabel">
-                    <property name="label">Filters</property>
-                    <property name="halign">start</property>
-                    <property name="margin_top">16</property>
-                    <property name="margin_bottom">8</property>
-                    <style>
-                      <class name="heading" />
-                    </style>
-                  </object>
-                </child> -->
-
                 <child>
                   <object class="AdwPreferencesGroup">
                     <child>
@@ -72,12 +60,22 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="AdwStatusPage" id="connection_error">
+                  <object class="AdwStatusPage" id="connection_error_message">
                     <property name="visible">false</property>
                     <property name="vexpand">true</property>
                     <property name="title">Connection Error</property>
                     <property name="icon_name">network-no-route-symbolic</property>
                     <property name="description">Please check the URL or your internet connection and try again.</property>
+                  </object>
+                </child>
+
+                <child>
+                  <object class="AdwStatusPage" id="no_url_message">
+                    <property name="visible">false</property>
+                    <property name="vexpand">true</property>
+                    <property name="title">Empty URL</property>
+                    <property name="icon_name">rss-symbolic</property>
+                    <property name="description">Please enter the URL of an ATOM or RSS feed above.</property>
                   </object>
                 </child>
 

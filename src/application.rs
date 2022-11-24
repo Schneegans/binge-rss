@@ -32,8 +32,9 @@ glib::wrapper! {
 impl Application {
   // Creates a new instance of the application class.
   pub fn new() -> Self {
-    glib::Object::new(&[("application-id", &Some(config::APP_ID))])
-      .expect("Application initialization failed")
+    glib::Object::builder()
+      .property("application-id", &Some(config::APP_ID))
+      .build()
   }
 
   // Returns the current main window of the application.
@@ -83,10 +84,6 @@ impl Application {
              &"".into(),
              &"".into()
           );
-
-          feed.set_id(this.imp().next_feed_id.borrow().to_string());
-
-          *this.imp().next_feed_id.borrow_mut() += 1;
 
           window.add_feed(&feed);
           this.imp().feeds.borrow_mut().push(feed);
@@ -191,7 +188,6 @@ mod imp {
     pub settings: gio::Settings,
     pub feeds: RefCell<Vec<Feed>>,
     pub removed_feeds: RefCell<Vec<Feed>>,
-    pub next_feed_id: RefCell<u32>,
   }
 
   impl Default for Application {
@@ -201,7 +197,6 @@ mod imp {
         settings: gio::Settings::new(config::APP_ID),
         feeds: RefCell::new(vec![]),
         removed_feeds: RefCell::new(vec![]),
-        next_feed_id: RefCell::new(0),
       }
     }
   }
@@ -216,7 +211,7 @@ mod imp {
   impl ObjectImpl for Application {}
 
   impl ApplicationImpl for Application {
-    fn activate(&self, this: &Self::Type) {
+    fn activate(&self) {
       if let Some(window) = self.window.upgrade() {
         window.show();
         window.present();
@@ -224,7 +219,7 @@ mod imp {
       }
 
       let window = Window::new();
-      window.set_application(Some(this));
+      window.set_application(Some(self.obj().as_ref()));
       window.set_title(Some(&"BingeRSS".to_string()));
       window.set_icon_name(Some(config::APP_ID));
 
@@ -233,25 +228,22 @@ mod imp {
       }
 
       window.connect_close_request(
-        glib::clone!(@weak this => @default-return gtk::Inhibit(false), move |_| {
-          this.save_data();
+        glib::clone!(@weak self as this => @default-return gtk::Inhibit(false), move |_| {
+          this.obj().save_data();
           gtk::Inhibit(false)
         }),
       );
 
       self.window.set(Some(&window));
 
-      this.setup_actions();
-      this.load_data();
+      self.obj().setup_actions();
+      self.obj().load_data();
 
       for feed in self.feeds.borrow_mut().iter_mut() {
-        feed.set_id(self.next_feed_id.borrow().to_string());
         window.add_feed(&feed);
-
-        *self.next_feed_id.borrow_mut() += 1;
       }
 
-      this.main_window().present();
+      self.obj().main_window().present();
     }
   }
 

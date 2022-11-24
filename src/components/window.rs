@@ -9,16 +9,14 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use std::error::Error;
-
 use adw::prelude::*;
 use glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
-use gtk::{gdk, gio, glib, CompositeTemplate};
+use gtk::{gio, glib, CompositeTemplate};
 
 use crate::components::Feed;
 use crate::components::FeedContentPage;
-use crate::components::FeedItem;
+use crate::components::FeedRow;
 
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
@@ -30,7 +28,7 @@ impl Window {
   // ----------------------------------------------------------------- constructor methods
 
   pub fn new() -> Self {
-    glib::Object::new(&[]).expect("Failed to create Window")
+    glib::Object::builder().build()
   }
 
   // ---------------------------------------------------------------------- public methods
@@ -61,127 +59,57 @@ impl Window {
     self.imp().no_feeds_message.set_visible(false);
     self.imp().leaflet.set_can_unfold(true);
 
-    let row = adw::ActionRow::builder()
-      .activatable(true)
-      .selectable(true)
-      .name(&feed.get_id())
-      .build();
-    self.imp().feed_list.append(&row);
+    let feed_row = FeedRow::new();
+    feed_row.set_feed(feed);
+    feed_row.set_widget_name(&feed.get_id());
+    self.imp().feed_list.append(&feed_row);
 
-    feed
-      .bind_property("title", &row, "title")
-      .flags(glib::BindingFlags::SYNC_CREATE)
-      .build();
     feed
       .bind_property("title", &self.imp().header_label.get(), "label")
       .build();
 
-    let spinner = gtk::Spinner::new();
-    spinner.start();
-    row.add_prefix(&spinner);
-
-    let item_list = FeedContentPage::new();
-    item_list.set_feed(feed);
-    self
-      .imp()
-      .feed_details
-      .add_named(&item_list, Some(&feed.get_id()));
-
-    row.connect_activated(
-      glib::clone!(@weak self as this, @weak item_list => move |row| {
-        this.show_details_page();
-        this.imp().feed_details.set_visible_child(&item_list);
-        this.imp().header_label.set_label(&row.title());
+    feed.connect_notify_local(
+      Some("title"),
+      glib::clone!(@weak self as this => move |_, _| {
+        this.imp().feed_list.invalidate_sort();
       }),
     );
 
-    self.imp().feed_list.select_row(Some(&row));
-    self.imp().feed_details.set_visible_child(&item_list);
-    self.imp().header_label.set_label(&row.title());
+    let feed_page = FeedContentPage::new();
+    feed_page.set_feed(feed);
+    self
+      .imp()
+      .feed_details
+      .add_named(&feed_page, Some(&feed.get_id()));
 
-    let url_copy = feed.get_url().clone();
+    feed_row.connect_activated(
+      glib::clone!(@weak self as this, @weak feed_page => move |feed_row| {
+        this.show_details_page();
+        this.imp().feed_details.set_visible_child(&feed_page);
+        this.imp().header_label.set_label(&feed_row.title());
+      }),
+    );
 
-    let handle = crate::RUNTIME.spawn(async move {
-      let bytes = reqwest::get(&url_copy).await?.bytes().await?;
-      let content = feed_rs::parser::parse(&bytes[..])?;
+    self.imp().feed_list.select_row(Some(&feed_row));
+    self.imp().feed_details.set_visible_child(&feed_page);
+    self.imp().header_label.set_label(&feed_row.title());
 
-      let url = url::Url::parse(&content.links[0].href);
-      let icon_url = url.as_ref().unwrap().scheme().to_string()
-        + &String::from("://")
-        + &url.as_ref().unwrap().host().unwrap().to_string()
-        + &String::from("/favicon.ico");
+    feed.download();
 
-      let bytes = reqwest::get(icon_url).await?.bytes().await?;
-      let image = Some(glib::Bytes::from(&bytes.to_vec()));
+    // in all cases
+    // feed_row.imp().spinner.set_visible(false);
+    // feed_row.imp().avatar.set_visible(true);
 
-      Ok::<(feed_rs::model::Feed, Option<glib::Bytes>), Box<dyn Error + Send + Sync>>((
-        content, image,
-      ))
-    });
+    // on succes
+    // feed_row.imp().avatar.set_custom_image(Some(&image.paintable().unwrap()));
+    // feed_page.set_items(items);
+    // feed_row.imp().badge.set_visible(true);
 
-    let ctx = glib::MainContext::default();
-    ctx.spawn_local(glib::clone!(@weak self as this, @weak feed => async move {
+    // on fail
+    // feed_row.set_connection_failed();
+    // feed_page.set_connection_failed();
 
-      let result = handle.await.unwrap();
-
-      row.remove(&spinner);
-
-      let avatar = adw::Avatar::builder()
-        .text(&feed.get_title())
-        .size(24)
-        .icon_name("rss-symbolic")
-        .build();
-
-      row.add_prefix(&avatar);
-
-      if result.is_ok() {
-
-        let (content, image) = result.unwrap();
-
-        let items = content.entries
-        .iter()
-        .map(|item| {
-          let title = if item.title.is_some() {
-            item.title.as_ref().unwrap().content.clone()
-          } else {
-            String::from("Unnamed Item")
-          };
-
-          let url = item.links[0].href.clone();
-
-          FeedItem::new(title, url)
-        })
-        .collect();
-
-        item_list.set_items(items);
-
-        if image.is_some() {
-          let stream = gio::MemoryInputStream::from_bytes(&image.unwrap());
-          let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
-
-          if pixbuf.is_ok() {
-            let image = gtk::Image::from_pixbuf(Some(&pixbuf.unwrap()));
-            avatar.set_custom_image(Some(&image.paintable().unwrap()));
-          }
-        }
-
-        {
-          let unread_count = 43;
-          let label = gtk::Label::builder()
-            .label(&unread_count.to_string())
-            .valign(gtk::Align::Center)
-            .css_classes(vec!["item-count-badge".into()])
-            .build();
-
-          row.add_suffix(&label);
-        }
-
-      } else {
-        avatar.set_icon_name(Some("network-no-route-symbolic"));
-        row.set_subtitle("Connection failed.");
-        item_list.set_connection_failed();
-      }
-    }));
+    self.imp().feed_list.invalidate_sort();
   }
 
   pub fn show_toast(
@@ -246,14 +174,6 @@ impl Window {
 
     Some(id)
   }
-
-  // pub fn set_filter(&self, id: &String, filter: &String) {
-  //   self.get_feed_content_page(id).unwrap().set_filter(filter);
-  // }
-
-  // pub fn get_filter(&self, id: &String) -> String {
-  //   self.get_feed_content_page(id).unwrap().get_filter()
-  // }
 
   pub fn show_feed_page(&self) {
     self
@@ -369,14 +289,22 @@ mod imp {
   }
 
   impl ObjectImpl for Window {
-    fn constructed(&self, obj: &Self::Type) {
-      self.parent_constructed(obj);
+    fn constructed(&self) {
+      self.parent_constructed();
 
-      obj.load_window_size();
+      self.obj().load_window_size();
 
       self.feed_list.set_sort_func(|a, b| -> gtk::Ordering {
-        let a = a.downcast_ref::<adw::ActionRow>().unwrap().title();
-        let b = b.downcast_ref::<adw::ActionRow>().unwrap().title();
+        let a = a
+          .downcast_ref::<adw::ActionRow>()
+          .unwrap()
+          .title()
+          .to_lowercase();
+        let b = b
+          .downcast_ref::<adw::ActionRow>()
+          .unwrap()
+          .title()
+          .to_lowercase();
 
         if a < b {
           gtk::Ordering::Smaller
@@ -392,13 +320,13 @@ mod imp {
   impl WidgetImpl for Window {}
 
   impl WindowImpl for Window {
-    fn close_request(&self, window: &Self::Type) -> gtk::Inhibit {
-      if let Err(err) = window.save_window_size() {
+    fn close_request(&self) -> gtk::Inhibit {
+      if let Err(err) = self.obj().save_window_size() {
         println!("Failed to save window state, {}", &err);
       }
 
       // Pass close request on to the parent
-      self.parent_close_request(window)
+      self.parent_close_request()
     }
   }
 

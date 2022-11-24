@@ -9,8 +9,12 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use gtk::{glib, subclass::prelude::ObjectSubclassIsExt};
+use std::error::Error;
+
+use gtk::{gdk, glib, subclass::prelude::ObjectSubclassIsExt, gio};
 use serde::{Deserialize, Serialize};
+
+use crate::components::FeedItem;
 
 // ---------------------------------------------------------------------------------------
 // The StoredFeed is used for storing the currently configured feeds in the settings.
@@ -42,16 +46,82 @@ impl Feed {
   // ----------------------------------------------------------------- constructor methods
 
   pub fn new(title: &String, url: &String, filter: &String, viewed: &String) -> Self {
-    glib::Object::new(&[
-      ("title", title),
-      ("url", url),
-      ("filter", filter),
-      ("viewed", viewed),
-    ])
-    .expect("creating 'Feed'")
+    glib::Object::builder()
+      .property("title", title)
+      .property("url", url)
+      .property("filter", filter)
+      .property("viewed", viewed).build()
   }
 
   // ---------------------------------------------------------------------- public methods
+
+  pub fn download(&self) {
+    let url_copy = self.imp().url.borrow().clone();
+
+    let handle = crate::RUNTIME.spawn(async move {
+      let bytes = reqwest::get(&url_copy).await?.bytes().await?;
+      let content = feed_rs::parser::parse(&bytes[..])?;
+
+      let url = url::Url::parse(&content.links[0].href);
+      let icon_url = url.as_ref().unwrap().scheme().to_string()
+        + &String::from("://")
+        + &url.as_ref().unwrap().host().unwrap().to_string()
+        + &String::from("/favicon.ico");
+
+      let bytes = reqwest::get(icon_url).await?.bytes().await?;
+      let image = Some(glib::Bytes::from(&bytes.to_vec()));
+
+      Ok::<(feed_rs::model::Feed, Option<glib::Bytes>), Box<dyn Error + Send + Sync>>((
+        content, image,
+      ))
+    });
+
+    let ctx = glib::MainContext::default();
+    ctx.spawn_local(glib::clone!(@weak self as this => async move {
+
+      let result = handle.await.unwrap();
+
+      if result.is_ok() {
+
+        let (content, image) = result.unwrap();
+
+        let items = content.entries
+        .iter()
+        .map(|item| {
+          let title = if item.title.is_some() {
+            item.title.as_ref().unwrap().content.clone()
+          } else {
+            String::from("Unnamed Item")
+          };
+
+          let url = item.links[0].href.clone();
+
+          FeedItem::new(title, url)
+        })
+        .collect();
+
+        this.imp().items.replace(items);
+
+        if image.is_some() {
+          let stream = gio::MemoryInputStream::from_bytes(&image.unwrap());
+          let pixbuf = gdk::gdk_pixbuf::Pixbuf::from_stream(&stream, gio::Cancellable::NONE);
+
+          if pixbuf.is_ok() {
+            let image = gtk::Image::from_pixbuf(Some(&pixbuf.unwrap()));
+            this.imp().icon.replace(Some(image.paintable().unwrap()));
+          }
+        }
+
+        println!("Success {}", this.imp().title.borrow());
+        
+        // Emit success
+        
+      } else {
+        println!("Fail {}", this.imp().title.borrow());
+        // Emit fail
+      }
+    }));
+  }
 
   pub fn get_title(&self) -> String {
     self.imp().title.borrow().clone()
@@ -72,14 +142,14 @@ impl Feed {
   pub fn get_id(&self) -> String {
     self.imp().id.borrow().clone()
   }
-  pub fn set_id(&self, id: String) {
-    self.imp().id.replace(id);
-  }
 }
 
 mod imp {
-  use gtk::prelude::ToValue;
-  use std::cell::RefCell;
+  use gtk::{prelude::ToValue, glib::subclass::Signal};
+  use std::{
+    cell::RefCell,
+    sync::atomic::{AtomicUsize, Ordering},
+  };
 
   use glib::{ParamSpec, ParamSpecString, Value};
   use gtk::subclass::prelude::*;
@@ -94,7 +164,10 @@ mod imp {
     pub url: RefCell<String>,
     pub filter: RefCell<String>,
     pub viewed: RefCell<String>,
+    
     pub id: RefCell<String>,
+    pub items: RefCell<Vec<FeedItem>>,
+    pub icon: RefCell<Option<gdk::Paintable>>,
   }
 
   // The central trait for subclassing a GObject
@@ -106,6 +179,15 @@ mod imp {
 
   // Trait shared by all GObjects
   impl ObjectImpl for Feed {
+    fn constructed(&self) {
+      self.parent_constructed();
+
+      static COUNTER: AtomicUsize = AtomicUsize::new(0);
+      self
+        .id
+        .replace(COUNTER.fetch_add(1, Ordering::Relaxed).to_string());
+    }
+
     fn properties() -> &'static [ParamSpec] {
       static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
         vec![
@@ -113,15 +195,22 @@ mod imp {
           ParamSpecString::builder("url").build(),
           ParamSpecString::builder("filter").build(),
           ParamSpecString::builder("viewed").build(),
-          ParamSpecString::builder("id").build(),
         ]
       });
       PROPERTIES.as_ref()
     }
 
+    fn signals() -> &'static [Signal] {
+      static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+          vec![
+            Signal::builder("download-failed").build()
+          ]
+      });
+      SIGNALS.as_ref()
+  }
+
     fn set_property(
       &self,
-      _obj: &Self::Type,
       _id: usize,
       value: &Value,
       pspec: &ParamSpec,
@@ -155,24 +244,16 @@ mod imp {
               .expect("The value needs to be of type `String`."),
           );
         }
-        "id" => {
-          self.id.replace(
-            value
-              .get()
-              .expect("The value needs to be of type `String`."),
-          );
-        }
         _ => unimplemented!(),
       }
     }
 
-    fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+    fn property(&self,  _id: usize, pspec: &ParamSpec) -> Value {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),
         "filter" => self.filter.borrow().clone().to_value(),
         "viewed" => self.viewed.borrow().clone().to_value(),
-        "id" => self.id.borrow().clone().to_value(),
         _ => unimplemented!(),
       }
     }

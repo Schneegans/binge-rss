@@ -28,7 +28,7 @@ impl FeedContentPage {
   // ----------------------------------------------------------------- constructor methods
 
   pub fn new() -> Self {
-    glib::Object::new(&[]).expect("Failed to create FeedContentPage")
+    glib::Object::builder().build()
   }
 
   // ---------------------------------------------------------------------- public methods
@@ -46,15 +46,27 @@ impl FeedContentPage {
       .bind_property("filter", &self.imp().feed_filter.get(), "text")
       .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
       .build();
+
+    feed.connect_notify_local(
+      Some("url"),
+      glib::clone!(@weak self as this => move |feed, _| {
+        this.imp().no_url_message.set_visible(feed.get_url().is_empty());
+      }),
+    );
+
+    self
+      .imp()
+      .no_url_message
+      .set_visible(feed.get_url().is_empty());
   }
 
   pub fn set_connection_failed(&self) {
-    self.imp().connection_error.set_visible(true);
+    self.imp().connection_error_message.set_visible(true);
     self.imp().view.set_visible(false);
   }
 
   pub fn set_items(&self, items: Vec<FeedItem>) {
-    self.imp().connection_error.set_visible(false);
+    self.imp().connection_error_message.set_visible(false);
     self.imp().view.set_visible(true);
 
     let factory = gtk::SignalListItemFactory::new();
@@ -139,7 +151,9 @@ mod imp {
     #[template_child]
     pub view: TemplateChild<gtk::ListView>,
     #[template_child]
-    pub connection_error: TemplateChild<adw::StatusPage>,
+    pub connection_error_message: TemplateChild<adw::StatusPage>,
+    #[template_child]
+    pub no_url_message: TemplateChild<adw::StatusPage>,
 
     pub model: gio::ListStore,
     pub filter: gtk::StringFilter,
@@ -152,7 +166,8 @@ mod imp {
         feed_url: TemplateChild::default(),
         feed_filter: TemplateChild::default(),
         view: TemplateChild::default(),
-        connection_error: TemplateChild::default(),
+        connection_error_message: TemplateChild::default(),
+        no_url_message: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
         filter: gtk::StringFilter::builder()
           .ignore_case(true)
@@ -183,8 +198,8 @@ mod imp {
   }
 
   impl ObjectImpl for FeedContentPage {
-    fn constructed(&self, obj: &Self::Type) {
-      self.parent_constructed(obj);
+    fn constructed(&self) {
+      self.parent_constructed();
 
       self
         .view
@@ -208,8 +223,8 @@ mod imp {
 
       self
         .feed_filter
-        .connect_changed(glib::clone!(@weak obj => move |entry| {
-          obj.imp().filter.set_search(Some(&entry.text()));
+        .connect_changed(glib::clone!(@weak self as this => move |entry| {
+          this.obj().imp().filter.set_search(Some(&entry.text()));
         }));
     }
   }

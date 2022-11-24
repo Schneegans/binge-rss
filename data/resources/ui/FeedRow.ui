@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
+SPDX-License-Identifier: MIT
+-->
+
+<interface>
+  <template class="FeedRow" parent="AdwActionRow">
+    <property name="activatable">true</property>
+    <property name="selectable">true</property>
+    <child type="prefix">
+      <object class="GtkSpinner" id="spinner">
+        <property name="width_request">24</property>
+        <property name="spinning">true</property>
+      </object>
+    </child>
+    <child type="prefix">
+      <object class="AdwAvatar" id="avatar">
+        <property name="size">24</property>
+        <property name="icon_name">rss-symbolic</property>
+        <property name="visible">false</property>
+      </object>
+    </child>
+    <child type="suffix">
+      <object class="GtkLabel" id="badge">
+        <property name="label">42</property>
+        <property name="valign">center</property>
+        <property name="visible">false</property>
+        <style>
+          <class name="item-count-badge" />
+        </style>
+      </object>
+    </child>
+  </template>
+</interface>
