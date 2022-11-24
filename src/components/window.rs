@@ -113,11 +113,15 @@ impl Window {
     );
 
     feed.connect_local(
-      "download-failed",
+      "download-finished",
       false,
-      glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |_| {
-        feed_row.imp().spinner.set_visible(false);
-        feed_row.imp().avatar.set_visible(true);
+      glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |success| {
+        let success = success[0].get::<bool>().unwrap();
+
+        feed_row.imp().spinner.set_visible(!success);
+        feed_row.imp().avatar.set_visible(success);
+        feed_row.set_connection_failed(!success);
+        feed_row.imp().badge.set_visible(success);
 
         feed_row
           .imp()
@@ -125,30 +129,9 @@ impl Window {
           .set_custom_image(feed.get_icon().as_ref());
         feed_page.set_items(feed.get_items().as_ref());
 
-        feed_row.set_connection_failed(true);
-        feed_page.set_connection_failed();
-
-        feed_row.imp().badge.set_visible(false);
-
-        None
-      }),
-    );
-
-    feed.connect_local(
-      "download-succeeded",
-      false,
-      glib::clone!(@weak feed, @weak feed_row, @weak feed_page => @default-return None, move |_| {
-        feed_row.imp().spinner.set_visible(false);
-        feed_row.imp().avatar.set_visible(true);
-
-        feed_row
-          .imp()
-          .avatar
-          .set_custom_image(feed.get_icon().as_ref());
-        feed_page.set_items(feed.get_items().as_ref());
-        feed_row.set_connection_failed(false);
-
-        feed_row.imp().badge.set_visible(true);
+        if !success {
+          feed_page.set_connection_failed();
+        }
 
         None
       }),

@@ -129,9 +129,9 @@ impl Feed {
           }
         }
 
-        this.emit_by_name::<()>("download-succeeded", &[]);
+        this.emit_by_name::<()>("download-finished", &[&true]);
       } else {
-        this.emit_by_name::<()>("download-failed", &[]);
+        this.emit_by_name::<()>("download-finished", &[&false]);
       }
     }))));
   }
@@ -175,6 +175,9 @@ mod imp {
   use glib::{ParamSpec, ParamSpecString, Value};
   use gtk::subclass::prelude::*;
   use once_cell::sync::Lazy;
+
+  use gtk::glib;
+  use gtk::prelude::*;
 
   use super::*;
 
@@ -227,8 +230,9 @@ mod imp {
       static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
         vec![
           Signal::builder("download-started").build(),
-          Signal::builder("download-failed").build(),
-          Signal::builder("download-succeeded").build(),
+          Signal::builder("download-finished")
+            .param_types([bool::static_type()])
+            .build(),
         ]
       });
       SIGNALS.as_ref()
