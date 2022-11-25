@@ -10,14 +10,14 @@
 // SPDX-License-Identifier: MIT
 
 mod feed;
-mod feed_content_page;
 mod feed_item;
+mod feed_page;
 mod feed_row;
 mod window;
 
 pub use self::feed::Feed;
 pub use self::feed::StoredFeed;
-pub use self::feed_content_page::FeedContentPage;
 pub use self::feed_item::FeedItem;
+pub use self::feed_page::FeedPage;
 pub use self::feed_row::FeedRow;
 pub use self::window::Window;

@@ -19,12 +19,12 @@ use crate::components::Feed;
 use crate::components::FeedItem;
 
 glib::wrapper! {
-  pub struct FeedContentPage(ObjectSubclass<imp::FeedContentPage>)
+  pub struct FeedPage(ObjectSubclass<imp::FeedPage>)
       @extends gtk::Widget, gtk::Box,
       @implements gtk::Accessible, gtk::Buildable, gtk::Orientable;
 }
 
-impl FeedContentPage {
+impl FeedPage {
   // ----------------------------------------------------------------- constructor methods
 
   pub fn new() -> Self {
@@ -140,8 +140,8 @@ mod imp {
   use super::*;
 
   #[derive(Debug, CompositeTemplate)]
-  #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedContentPage.ui")]
-  pub struct FeedContentPage {
+  #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedPage.ui")]
+  pub struct FeedPage {
     #[template_child]
     pub feed_name: TemplateChild<adw::EntryRow>,
     #[template_child]
@@ -159,7 +159,7 @@ mod imp {
     pub filter: gtk::StringFilter,
   }
 
-  impl Default for FeedContentPage {
+  impl Default for FeedPage {
     fn default() -> Self {
       Self {
         feed_name: TemplateChild::default(),
@@ -183,9 +183,9 @@ mod imp {
   }
 
   #[glib::object_subclass]
-  impl ObjectSubclass for FeedContentPage {
-    const NAME: &'static str = "FeedContentPage";
-    type Type = super::FeedContentPage;
+  impl ObjectSubclass for FeedPage {
+    const NAME: &'static str = "FeedPage";
+    type Type = super::FeedPage;
     type ParentType = gtk::Box;
 
     fn class_init(klass: &mut Self::Class) {
@@ -197,7 +197,7 @@ mod imp {
     }
   }
 
-  impl ObjectImpl for FeedContentPage {
+  impl ObjectImpl for FeedPage {
     fn constructed(&self) {
       self.parent_constructed();
 
@@ -229,7 +229,7 @@ mod imp {
     }
   }
 
-  impl WidgetImpl for FeedContentPage {}
+  impl WidgetImpl for FeedPage {}
 
-  impl BoxImpl for FeedContentPage {}
+  impl BoxImpl for FeedPage {}
 }

@@ -15,7 +15,7 @@ use gtk::subclass::prelude::*;
 use gtk::{gio, glib, CompositeTemplate};
 
 use crate::components::Feed;
-use crate::components::FeedContentPage;
+use crate::components::FeedPage;
 use crate::components::FeedRow;
 
 glib::wrapper! {
@@ -82,7 +82,7 @@ impl Window {
       }),
     );
 
-    let feed_page = FeedContentPage::new();
+    let feed_page = FeedPage::new();
     feed_page.set_feed(feed);
     self
       .imp()
@@ -185,7 +185,7 @@ impl Window {
 
     list.remove(&row);
 
-    let page = self.get_feed_content_page(&id)?;
+    let page = self.get_feed_page(&id)?;
     self.imp().feed_details.remove(&page);
 
     self.imp().header_label.set_label("");
@@ -221,11 +221,11 @@ impl Window {
 
   // --------------------------------------------------------------------- private methods
 
-  fn get_feed_content_page(&self, id: &String) -> Option<FeedContentPage> {
+  fn get_feed_page(&self, id: &String) -> Option<FeedPage> {
     let page = self.imp().feed_details.child_by_name(id.as_str());
 
     if page.is_some() {
-      Some(page?.downcast::<FeedContentPage>().unwrap())
+      Some(page?.downcast::<FeedPage>().unwrap())
     } else {
       None
     }
