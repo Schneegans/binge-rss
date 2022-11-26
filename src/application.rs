@@ -9,10 +9,8 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use adw::prelude::*;
-use glib::WeakRef;
-use gtk::glib::FromVariant;
-use gtk::{gio, glib, subclass::prelude::*};
+use adw::{prelude::*, subclass::prelude::*};
+use gtk::{gio, glib, glib::FromVariant, glib::WeakRef};
 use std::cell::RefCell;
 
 use crate::components::Feed;
@@ -178,9 +176,7 @@ impl Default for Application {
 }
 
 mod imp {
-
   use super::*;
-  use adw::subclass::prelude::AdwApplicationImpl;
 
   #[derive(Debug)]
   pub struct Application {

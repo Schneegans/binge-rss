@@ -9,15 +9,32 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
+use gtk::{gdk, gio, glib, prelude::*, subclass::prelude::*};
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 use std::{
   cell::{Ref, RefCell},
   error::Error,
+  sync::atomic::{AtomicUsize, Ordering},
 };
 
-use gtk::{gdk, gio, glib, prelude::ObjectExt, subclass::prelude::ObjectSubclassIsExt};
-use serde::{Deserialize, Serialize};
-
 use crate::components::FeedItem;
+
+// ---------------------------------------------------------------------------------------
+#[derive(Debug, Copy, Clone, PartialEq, Eq, glib::Enum)]
+#[enum_type(name = "FeedState")]
+pub enum FeedState {
+  DownloadPending,
+  Downloading,
+  DownloadFailed,
+  DownloadSucceeded,
+}
+
+impl Default for FeedState {
+  fn default() -> Self {
+    FeedState::DownloadPending
+  }
+}
 
 // ---------------------------------------------------------------------------------------
 // The StoredFeed is used for storing the currently configured feeds in the settings.
@@ -166,19 +183,6 @@ impl Feed {
 }
 
 mod imp {
-  use gtk::{
-    glib::{subclass::Signal, SourceId},
-    prelude::ToValue,
-  };
-  use std::sync::atomic::{AtomicUsize, Ordering};
-
-  use glib::{ParamSpec, ParamSpecString, Value};
-  use gtk::subclass::prelude::*;
-  use once_cell::sync::Lazy;
-
-  use gtk::glib;
-  use gtk::prelude::*;
-
   use super::*;
 
   // Object holding the state
@@ -188,12 +192,13 @@ mod imp {
     pub url: RefCell<String>,
     pub filter: RefCell<String>,
     pub viewed: RefCell<String>,
+    pub state: RefCell<FeedState>,
 
     pub id: RefCell<String>,
     pub items: RefCell<Vec<FeedItem>>,
     pub icon: RefCell<Option<gdk::Paintable>>,
 
-    pub download_source_id: RefCell<Option<SourceId>>,
+    pub download_source_id: RefCell<Option<glib::SourceId>>,
   }
 
   // The central trait for subclassing a GObject
@@ -214,23 +219,25 @@ mod imp {
         .replace(COUNTER.fetch_add(1, Ordering::Relaxed).to_string());
     }
 
-    fn properties() -> &'static [ParamSpec] {
-      static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+    fn properties() -> &'static [glib::ParamSpec] {
+      static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
         vec![
-          ParamSpecString::builder("title").build(),
-          ParamSpecString::builder("url").build(),
-          ParamSpecString::builder("filter").build(),
-          ParamSpecString::builder("viewed").build(),
+          glib::ParamSpecString::builder("title").build(),
+          glib::ParamSpecString::builder("url").build(),
+          glib::ParamSpecString::builder("filter").build(),
+          glib::ParamSpecString::builder("viewed").build(),
+          glib::ParamSpecEnum::builder::<FeedState>("state", FeedState::default())
+            .build(),
         ]
       });
       PROPERTIES.as_ref()
     }
 
-    fn signals() -> &'static [Signal] {
-      static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+    fn signals() -> &'static [glib::subclass::Signal] {
+      static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
         vec![
-          Signal::builder("download-started").build(),
-          Signal::builder("download-finished")
+          glib::subclass::Signal::builder("download-started").build(),
+          glib::subclass::Signal::builder("download-finished")
             .param_types([bool::static_type()])
             .build(),
         ]
@@ -238,7 +245,7 @@ mod imp {
       SIGNALS.as_ref()
     }
 
-    fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
+    fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
       match pspec.name() {
         "title" => {
           self.title.replace(
@@ -268,16 +275,24 @@ mod imp {
               .expect("The value needs to be of type `String`."),
           );
         }
+        "state" => {
+          self.state.replace(
+            value
+              .get()
+              .expect("The value needs to be of type `FeedState`."),
+          );
+        }
         _ => unimplemented!(),
       }
     }
 
-    fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
+    fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),
         "filter" => self.filter.borrow().clone().to_value(),
         "viewed" => self.viewed.borrow().clone().to_value(),
+        "state" => self.state.borrow().clone().to_value(),
         _ => unimplemented!(),
       }
     }

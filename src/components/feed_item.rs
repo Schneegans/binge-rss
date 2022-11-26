@@ -9,7 +9,9 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use gtk::{glib, subclass::prelude::ObjectSubclassIsExt};
+use gtk::{glib, prelude::*, subclass::prelude::*};
+use once_cell::sync::Lazy;
+use std::cell::RefCell;
 
 glib::wrapper! {
   pub struct FeedItem(ObjectSubclass<imp::FeedItem>);
@@ -37,13 +39,6 @@ impl FeedItem {
 }
 
 mod imp {
-  use gtk::prelude::ToValue;
-  use std::cell::RefCell;
-
-  use glib::{ParamSpec, ParamSpecString, Value};
-  use gtk::subclass::prelude::*;
-  use once_cell::sync::Lazy;
-
   use super::*;
 
   // Object holding the state
@@ -62,17 +57,17 @@ mod imp {
 
   // Trait shared by all GObjects
   impl ObjectImpl for FeedItem {
-    fn properties() -> &'static [ParamSpec] {
-      static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+    fn properties() -> &'static [glib::ParamSpec] {
+      static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
         vec![
-          ParamSpecString::builder("title").build(),
-          ParamSpecString::builder("url").build(),
+          glib::ParamSpecString::builder("title").build(),
+          glib::ParamSpecString::builder("url").build(),
         ]
       });
       PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, _id: usize, value: &Value, pspec: &ParamSpec) {
+    fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
       match pspec.name() {
         "title" => {
           self.title.replace(
@@ -92,7 +87,7 @@ mod imp {
       }
     }
 
-    fn property(&self, _id: usize, pspec: &ParamSpec) -> Value {
+    fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),

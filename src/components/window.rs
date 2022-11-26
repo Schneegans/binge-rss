@@ -9,14 +9,13 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use adw::prelude::*;
-use glib::subclass::InitializingObject;
-use gtk::subclass::prelude::*;
+use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib, CompositeTemplate};
 
 use crate::components::Feed;
 use crate::components::FeedPage;
 use crate::components::FeedRow;
+use crate::config;
 
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
@@ -259,10 +258,6 @@ impl Window {
 }
 
 mod imp {
-  use adw::subclass::prelude::AdwApplicationWindowImpl;
-
-  use crate::config;
-
   use super::*;
 
   #[derive(Debug, CompositeTemplate)]
@@ -313,7 +308,7 @@ mod imp {
       klass.bind_template();
     }
 
-    fn instance_init(obj: &InitializingObject<Self>) {
+    fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
       obj.init_template();
     }
   }

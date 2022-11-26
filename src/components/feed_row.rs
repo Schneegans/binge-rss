@@ -9,9 +9,7 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use adw::prelude::*;
-use adw::subclass::prelude::*;
-use glib::subclass::InitializingObject;
+use adw::{prelude::*, subclass::prelude::*};
 use gtk::{glib, CompositeTemplate};
 
 use crate::components::Feed;
@@ -86,7 +84,7 @@ mod imp {
       klass.bind_template();
     }
 
-    fn instance_init(obj: &InitializingObject<Self>) {
+    fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
       obj.init_template();
     }
   }

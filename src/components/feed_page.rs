@@ -10,10 +10,7 @@
 // SPDX-License-Identifier: MIT
 
 use adw::prelude::*;
-use glib::subclass::InitializingObject;
-use gtk::subclass::prelude::*;
-use gtk::{gdk, gio, pango};
-use gtk::{glib, CompositeTemplate};
+use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
 
 use crate::components::Feed;
 use crate::components::FeedItem;
@@ -192,7 +189,7 @@ mod imp {
       klass.bind_template();
     }
 
-    fn instance_init(obj: &InitializingObject<Self>) {
+    fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
       obj.init_template();
     }
   }
