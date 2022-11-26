@@ -49,19 +49,7 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="GtkLabel">
-                    <property name="label">Recent Items</property>
-                    <property name="halign">start</property>
-                    <property name="margin_top">24</property>
-                    <style>
-                      <class name="heading" />
-                    </style>
-                  </object>
-                </child>
-
-                <child>
                   <object class="AdwStatusPage" id="connection_error_message">
-                    <property name="visible">false</property>
                     <property name="vexpand">true</property>
                     <property name="title">Connection Error</property>
                     <property name="icon_name">network-no-route-symbolic</property>
@@ -71,7 +59,6 @@ SPDX-License-Identifier: MIT
 
                 <child>
                   <object class="AdwStatusPage" id="no_url_message">
-                    <property name="visible">false</property>
                     <property name="vexpand">true</property>
                     <property name="title">Empty URL</property>
                     <property name="icon_name">rss-symbolic</property>
@@ -80,10 +67,24 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="GtkListView" id="view">
-                    <property name="visible">false</property>
-                    <property name="margin_top">12</property>
-                    <property name="single_click_activate">true</property>
+                  <object class="GtkBox" id="feed_items">
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Recent Items</property>
+                        <property name="halign">start</property>
+                        <property name="margin_top">24</property>
+                        <style>
+                          <class name="heading" />
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkListView" id="feed_item_list_view">
+                        <property name="margin_top">12</property>
+                        <property name="single_click_activate">true</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
 

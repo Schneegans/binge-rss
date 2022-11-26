@@ -52,15 +52,17 @@ impl FeedPage {
 
         this.imp().no_url_message.set_visible(false);
         this.imp().connection_error_message.set_visible(false);
-        this.imp().view.set_visible(false);
+        this.imp().feed_items.set_visible(true);
 
         if feed.get_state().clone() == FeedState::EmptyURL {
           this.imp().no_url_message.set_visible(true);
+          this.imp().feed_items.set_visible(false);
         } else if feed.get_state().clone() == FeedState::DownloadFailed {
           this.imp().connection_error_message.set_visible(true);
+          this.imp().feed_items.set_visible(false);
         } else if feed.get_state().clone() == FeedState::DownloadSucceeded {
           this.set_items(feed.get_items().as_ref());
-          this.imp().view.set_visible(true);
+          this.imp().feed_items.set_visible(true);
         }
       }),
     );
@@ -128,9 +130,12 @@ impl FeedPage {
     let filter_model =
       gtk::FilterListModel::new(Some(&self.imp().model), Some(&self.imp().filter));
     let selection_model = gtk::NoSelection::new(Some(&filter_model));
-    self.imp().view.set_model(Some(&selection_model));
-    self.imp().view.set_factory(Some(&factory));
-    self.imp().view.set_css_classes(&["card"]);
+    self
+      .imp()
+      .feed_item_list_view
+      .set_model(Some(&selection_model));
+    self.imp().feed_item_list_view.set_factory(Some(&factory));
+    self.imp().feed_item_list_view.set_css_classes(&["card"]);
   }
 }
 
@@ -147,7 +152,9 @@ mod imp {
     #[template_child]
     pub feed_filter: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub view: TemplateChild<gtk::ListView>,
+    pub feed_items: TemplateChild<gtk::Box>,
+    #[template_child]
+    pub feed_item_list_view: TemplateChild<gtk::ListView>,
     #[template_child]
     pub connection_error_message: TemplateChild<adw::StatusPage>,
     #[template_child]
@@ -163,7 +170,8 @@ mod imp {
         feed_name: TemplateChild::default(),
         feed_url: TemplateChild::default(),
         feed_filter: TemplateChild::default(),
-        view: TemplateChild::default(),
+        feed_items: TemplateChild::default(),
+        feed_item_list_view: TemplateChild::default(),
         connection_error_message: TemplateChild::default(),
         no_url_message: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
@@ -200,24 +208,26 @@ mod imp {
       self.parent_constructed();
 
       self
-        .view
+        .feed_item_list_view
         .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
 
-      self.view.connect_activate(|view, pos| {
-        let item = view
-          .model()
-          .unwrap()
-          .item(pos)
-          .unwrap()
-          .downcast::<FeedItem>()
-          .unwrap();
-        let url = item.get_url();
-        let result =
-          gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
-        if result.is_err() {
-          println!("Failed to open URL {}", url);
-        }
-      });
+      self
+        .feed_item_list_view
+        .connect_activate(|feed_item_list_view, pos| {
+          let item = feed_item_list_view
+            .model()
+            .unwrap()
+            .item(pos)
+            .unwrap()
+            .downcast::<FeedItem>()
+            .unwrap();
+          let url = item.get_url();
+          let result =
+            gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+          if result.is_err() {
+            println!("Failed to open URL {}", url);
+          }
+        });
 
       self
         .feed_filter

@@ -117,6 +117,10 @@ impl Feed {
 
         let (content, image) = result.unwrap();
 
+        if content.title.is_some() && this.get_title().eq("New Feed") {
+          this.set_property("title", content.title.unwrap().content.clone());
+        }
+
         let items = content.entries
         .iter()
         .map(|item| {
