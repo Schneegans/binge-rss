@@ -15,6 +15,8 @@ use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
 use crate::components::Feed;
 use crate::components::FeedItem;
 
+use super::feed::FeedState;
+
 glib::wrapper! {
   pub struct FeedPage(ObjectSubclass<imp::FeedPage>)
       @extends gtk::Widget, gtk::Box,
@@ -45,27 +47,26 @@ impl FeedPage {
       .build();
 
     feed.connect_notify_local(
-      Some("url"),
+      Some("state"),
       glib::clone!(@weak self as this => move |feed, _| {
-        this.imp().no_url_message.set_visible(feed.get_url().is_empty());
+
+        this.imp().no_url_message.set_visible(false);
+        this.imp().connection_error_message.set_visible(false);
+        this.imp().view.set_visible(false);
+
+        if feed.get_state().clone() == FeedState::EmptyURL {
+          this.imp().no_url_message.set_visible(true);
+        } else if feed.get_state().clone() == FeedState::DownloadFailed {
+          this.imp().connection_error_message.set_visible(true);
+        } else if feed.get_state().clone() == FeedState::DownloadSucceeded {
+          this.set_items(feed.get_items().as_ref());
+          this.imp().view.set_visible(true);
+        }
       }),
     );
-
-    self
-      .imp()
-      .no_url_message
-      .set_visible(feed.get_url().is_empty());
-  }
-
-  pub fn set_connection_failed(&self) {
-    self.imp().connection_error_message.set_visible(true);
-    self.imp().view.set_visible(false);
   }
 
   pub fn set_items(&self, items: &Vec<FeedItem>) {
-    self.imp().connection_error_message.set_visible(false);
-    self.imp().view.set_visible(true);
-
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(move |_, list_item| {
       const PADDING: i32 = 12;

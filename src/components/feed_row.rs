@@ -12,7 +12,7 @@
 use adw::{prelude::*, subclass::prelude::*};
 use gtk::{glib, CompositeTemplate};
 
-use crate::components::Feed;
+use crate::components::{feed::FeedState, Feed};
 
 glib::wrapper! {
   pub struct FeedRow(ObjectSubclass<imp::FeedRow>)
@@ -38,15 +38,29 @@ impl FeedRow {
       .bind_property("title", &self.imp().avatar.get(), "text")
       .flags(glib::BindingFlags::SYNC_CREATE)
       .build();
-  }
 
-  pub fn set_connection_failed(&self, failed: bool) {
-    self.imp().avatar.set_icon_name(Some(if failed {
-      "network-no-route-symbolic"
-    } else {
-      "rss-symbolic"
-    }));
-    self.set_subtitle(if failed { "Connection failed." } else { "" });
+    feed.connect_notify_local(
+      Some("state"),
+      glib::clone!(@weak self as this => move |feed, _| {
+
+        let state = feed.get_state().clone();
+
+        this.imp().spinner.set_visible(state == FeedState::DownloadStarted);
+        this.imp().avatar.set_visible(state != FeedState::DownloadStarted);
+        this.imp().badge.set_visible(state == FeedState::DownloadSucceeded);
+        this.imp().avatar.set_custom_image(feed.get_icon().as_ref());
+        this.imp().avatar.set_icon_name(Some("network-no-route-symbolic"));
+        this.set_subtitle("");
+
+        if state == FeedState::DownloadFailed {
+          this.set_subtitle("Connection failed.");
+        } else if state == FeedState::EmptyURL {
+          this.set_subtitle("Empty URL.");
+        } else if state == FeedState::DownloadSucceeded {
+          this.imp().avatar.set_icon_name(Some("rss-symbolic"));
+        }
+      }),
+    );
   }
 }
 

@@ -24,15 +24,16 @@ use crate::components::FeedItem;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, glib::Enum)]
 #[enum_type(name = "FeedState")]
 pub enum FeedState {
+  EmptyURL,
   DownloadPending,
-  Downloading,
+  DownloadStarted,
   DownloadFailed,
   DownloadSucceeded,
 }
 
 impl Default for FeedState {
   fn default() -> Self {
-    FeedState::DownloadPending
+    FeedState::EmptyURL
   }
 }
 
@@ -82,10 +83,7 @@ impl Feed {
       source_id.unwrap().remove();
     }
 
-    self.emit_by_name::<()>("download-started", &[]);
-
-    self.imp().icon.replace(None);
-    self.imp().items.replace(vec![]);
+    self.set_property("state", FeedState::DownloadStarted);
 
     let url_copy = self.imp().url.borrow().clone();
 
@@ -146,9 +144,9 @@ impl Feed {
           }
         }
 
-        this.emit_by_name::<()>("download-finished", &[&true]);
+        this.set_property("state", FeedState::DownloadSucceeded);
       } else {
-        this.emit_by_name::<()>("download-finished", &[&false]);
+        this.set_property("state", FeedState::DownloadFailed);
       }
     }))));
   }
@@ -171,6 +169,10 @@ impl Feed {
 
   pub fn get_id(&self) -> Ref<String> {
     self.imp().id.borrow()
+  }
+
+  pub fn get_state(&self) -> Ref<FeedState> {
+    self.imp().state.borrow()
   }
 
   pub fn get_items(&self) -> Ref<Vec<FeedItem>> {
@@ -233,18 +235,6 @@ mod imp {
       PROPERTIES.as_ref()
     }
 
-    fn signals() -> &'static [glib::subclass::Signal] {
-      static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
-        vec![
-          glib::subclass::Signal::builder("download-started").build(),
-          glib::subclass::Signal::builder("download-finished")
-            .param_types([bool::static_type()])
-            .build(),
-        ]
-      });
-      SIGNALS.as_ref()
-    }
-
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
       match pspec.name() {
         "title" => {
@@ -260,6 +250,15 @@ mod imp {
               .get()
               .expect("The value needs to be of type `String`."),
           );
+
+          self.obj().imp().icon.replace(None);
+          self.obj().imp().items.replace(vec![]);
+
+          if self.url.borrow().is_empty() {
+            self.obj().set_property("state", FeedState::EmptyURL);
+          } else {
+            self.obj().download();
+          }
         }
         "filter" => {
           self.filter.replace(
