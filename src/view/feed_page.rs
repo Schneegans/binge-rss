@@ -12,10 +12,7 @@
 use adw::prelude::*;
 use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
 
-use crate::components::Feed;
-use crate::components::FeedItem;
-
-use super::feed::FeedState;
+use crate::model::{Feed, FeedItem, FeedState};
 
 glib::wrapper! {
   pub struct FeedPage(ObjectSubclass<imp::FeedPage>)

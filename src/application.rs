@@ -13,10 +13,10 @@ use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib, glib::FromVariant, glib::WeakRef};
 use std::cell::RefCell;
 
-use crate::components::Feed;
-use crate::components::StoredFeed;
-use crate::components::Window;
 use crate::config;
+use crate::model::Feed;
+use crate::model::StoredFeed;
+use crate::view::Window;
 
 // ---------------------------------------------------------------------------------------
 // The application of BingeRSS is derived from adw::Application. It does not have any

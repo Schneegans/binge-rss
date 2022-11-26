@@ -18,7 +18,7 @@ use std::{
   sync::atomic::{AtomicUsize, Ordering},
 };
 
-use crate::components::FeedItem;
+use crate::model::FeedItem;
 
 // ---------------------------------------------------------------------------------------
 #[derive(Debug, Copy, Clone, PartialEq, Eq, glib::Enum)]

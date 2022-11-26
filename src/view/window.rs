@@ -12,10 +12,9 @@
 use adw::{prelude::*, subclass::prelude::*};
 use gtk::{gio, glib, CompositeTemplate};
 
-use crate::components::Feed;
-use crate::components::FeedPage;
-use crate::components::FeedRow;
 use crate::config;
+use crate::model::Feed;
+use crate::view::{FeedPage, FeedRow};
 
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)

@@ -10,8 +10,9 @@
 // SPDX-License-Identifier: MIT
 
 mod application;
-mod components;
 mod config;
+mod model;
+mod view;
 
 use application::Application;
 

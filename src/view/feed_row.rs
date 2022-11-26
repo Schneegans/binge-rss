@@ -12,7 +12,7 @@
 use adw::{prelude::*, subclass::prelude::*};
 use gtk::{glib, CompositeTemplate};
 
-use crate::components::{feed::FeedState, Feed};
+use crate::model::{Feed, FeedState};
 
 glib::wrapper! {
   pub struct FeedRow(ObjectSubclass<imp::FeedRow>)
