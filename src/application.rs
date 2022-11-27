@@ -39,13 +39,19 @@ impl Application {
 
   // --------------------------------------------------------------------- private methods
 
-  // Returns the current main window of the application.
-  fn main_window(&self) -> Window {
-    self.imp().window.upgrade().unwrap()
-  }
-
+  // This creates all the actions which glue together all the parts of BingeRSS. There are
+  // currently these actions available:
+  //   app.about():          Shows the about dialog.
+  //   app.quit():           Quits the application.
+  //   app.add-feed():       Adds a new empty feed.
+  //   app.remove-feed():    Removes the currently selected feed and shows a undo-toast.
+  //   app.show-feed-page(): If folded, this shows the pane of the main leaflet.
+  //   app.undo-remove(id):  Re-adds a previously deleted feed. The ID of the
+  //                         to-be-re-added feed has to be given as parameter.
   fn setup_actions(&self) {
     let window = self.main_window();
+
+    // Show an about dialog if app.about() is called.
     {
       let action = gio::SimpleAction::new("about", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
@@ -67,6 +73,7 @@ impl Application {
       self.add_action(&action);
     }
 
+    // Quit BingeRSS if app.quit() is called.
     {
       let action = gio::SimpleAction::new("quit", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
@@ -76,46 +83,78 @@ impl Application {
       self.add_action(&action);
     }
 
+    // Add a new empty feed if app.add-feed() is called.
     {
       let action = gio::SimpleAction::new("add-feed", None);
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, _| {
-          let feed = Feed::new(
-             &"New Feed".into(),
-             &"".into(),
-             &"".into(),
-             &"".into()
-          );
 
+          // First, create the new feed.
+          let feed = Feed::new(&"New Feed".into(), &"".into(), &"".into(), &"".into());
+
+          // Then add it to the user interface.
           window.add_feed(&feed);
+
+          // Finally, store it in the list of all feeds.
           this.imp().feeds.borrow_mut().push(feed);
         }),
       );
       self.add_action(&action);
     }
 
+    // Remove the currently selected feed if app.remove-feed() is called. This will show a
+    // toast which will allow to undo this destructive action for a couple of seconds.
     {
       let action = gio::SimpleAction::new("remove-feed", None);
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, _| {
-          let id = window.remove_selected_feed();
 
-          if id.is_some() {
-            let i = this.imp().feeds.borrow().iter().position(|f| f.get_id().eq(id.as_ref().unwrap())).unwrap();
-            window.show_toast(format!("Removed '{}'", this.imp().feeds.borrow()[i].get_title()).as_str(), "Undo", "app.undo-remove", id.unwrap().to_variant());
-            this.imp().removed_feeds.borrow_mut().push(this.imp().feeds.borrow_mut().remove(i));
+          // First, remove the currently selected feed from the user interface. This will
+          // return the ID of the removed feed (if any).
+          let id = window.remove_selected_feed();
+          if id.is_none() {
+            return;
           }
+
+          // Get the index of the removed feed in the list of all feeds.
+          let i = this.imp().feeds.borrow().iter().position(|f| {
+            f.get_id().eq(id.as_ref().unwrap())
+          }).unwrap();
+
+          // Show the undo-toast. It has a button which will call the app.undo-remove()
+          // action and pass the ID of the removed feed to the action.
+          window.show_toast(
+            format!("Removed '{}'", this.imp().feeds.borrow()[i].get_title()).as_str(),
+            "Undo",
+            "app.undo-remove",
+            id.unwrap().to_variant());
+
+          // Remove the feed from the list of all feeds and add it to the list of all
+          // removed feeds instead. This will allow us to later undo the deletion of the
+          // feed.
+          let feed = this.imp().feeds.borrow_mut().remove(i);
+          this.imp().removed_feeds.borrow_mut().push(feed);
         }),
       );
       self.add_action(&action);
     }
 
+    // Add the app.undo-remove(id) action, which is called when the user clicks the 'Undo'
+    // button in the toast which is shown whenever a feed is deleted.
     {
       let action = gio::SimpleAction::new("undo-remove", Some(glib::VariantTy::STRING));
       action.connect_activate(
         glib::clone!(@weak self as this, @weak window => move |_, id| {
             if id.is_some() {
-              let i = this.imp().removed_feeds.borrow().iter().position(|f| f.get_id().eq(&String::from_variant(id.unwrap()).unwrap())).unwrap();
+
+              // First, get the index of the to-be-restored feed from the list of all
+              // previously removed feeds.
+              let i = this.imp().removed_feeds.borrow().iter().position(|f| {
+                f.get_id().eq(&String::from_variant(id.unwrap()).unwrap())
+              }).unwrap();
+
+              // Then remove the feed from the list of removed feeds, re-add it to the
+              // user interface and store it in the real feed list.
               let feed = this.imp().removed_feeds.borrow_mut().remove(i);
               window.add_feed(&feed);
               this.imp().feeds.borrow_mut().push(feed);
@@ -125,6 +164,8 @@ impl Application {
       self.add_action(&action);
     }
 
+    // If the main leaflet is folded, this will show the left pane. This is used for the
+    // back-navigation button in the headerbar.
     {
       let action = gio::SimpleAction::new("show-feed-page", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
@@ -171,6 +212,12 @@ impl Application {
       .settings
       .set_string("feeds", &json)
       .expect("Failed to write settings!");
+  }
+
+  // Returns the current main window of the application. This will panic if called before
+  // the initial call to activate().
+  fn main_window(&self) -> Window {
+    self.imp().window.upgrade().unwrap()
   }
 }
 
