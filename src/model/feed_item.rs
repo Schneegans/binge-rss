@@ -13,6 +13,8 @@ use gtk::{glib, prelude::*, subclass::prelude::*};
 use once_cell::sync::Lazy;
 use std::cell::RefCell;
 
+// ---------------------------------------------------------------------------------------
+
 glib::wrapper! {
   pub struct FeedItem(ObjectSubclass<imp::FeedItem>);
 }
@@ -40,6 +42,8 @@ impl FeedItem {
 
 mod imp {
   use super::*;
+
+  // -------------------------------------------------------------------------------------
 
   // Object holding the state
   #[derive(Debug, Default)]

@@ -28,12 +28,16 @@ glib::wrapper! {
 }
 
 impl Application {
+  // ----------------------------------------------------------------- constructor methods
+
   // Creates a new instance of the application class.
   pub fn new() -> Self {
     glib::Object::builder()
       .property("application-id", &Some(config::APP_ID))
       .build()
   }
+
+  // --------------------------------------------------------------------- private methods
 
   // Returns the current main window of the application.
   fn main_window(&self) -> Window {
@@ -141,6 +145,10 @@ impl Application {
         .map(|f| Feed::new(&f.title, &f.url, &f.filter, &f.viewed))
         .collect(),
     );
+
+    for feed in self.imp().feeds.borrow_mut().iter_mut() {
+      self.main_window().add_feed(&feed);
+    }
   }
 
   fn save_data(&self) {
@@ -166,18 +174,14 @@ impl Application {
   }
 }
 
-impl Default for Application {
-  fn default() -> Self {
-    gio::Application::default()
-      .unwrap()
-      .downcast::<Application>()
-      .unwrap()
-  }
-}
-
 mod imp {
   use super::*;
 
+  // -------------------------------------------------------------------------------------
+  // This object holds the state of our custom application. Next to the current
+  // application window and the GSettings, it contains a list of all currently configured
+  // feeds. If a feed gets removed by the user, it is removed from the 'feeds' but added
+  // to the 'removed_feeds'. This allows us to undo the deletion if required.
   #[derive(Debug)]
   pub struct Application {
     pub window: WeakRef<Window>,
@@ -208,21 +212,26 @@ mod imp {
 
   impl ApplicationImpl for Application {
     fn activate(&self) {
+      // If the app is already running and we created a window before, simply show it.
       if let Some(window) = self.window.upgrade() {
         window.show();
         window.present();
         return;
       }
 
+      // Else, the app was not running and we have to create a new window.
       let window = Window::new();
       window.set_application(Some(self.obj().as_ref()));
       window.set_title(Some(&"BingeRSS".to_string()));
       window.set_icon_name(Some(config::APP_ID));
+      self.window.set(Some(&window));
 
+      // Add the cool striped headerbar if we compile a development version.
       if config::PROFILE == "develop" {
         window.add_css_class("devel");
       }
 
+      // Save the current feeds whenever the window gets closed.
       window.connect_close_request(
         glib::clone!(@weak self as this => @default-return gtk::Inhibit(false), move |_| {
           this.obj().save_data();
@@ -230,15 +239,13 @@ mod imp {
         }),
       );
 
-      self.window.set(Some(&window));
-
+      // Setup the actions which glue to together the functionality of BingeRSS.
       self.obj().setup_actions();
+
+      // Load all configured feeds from the settings.
       self.obj().load_data();
 
-      for feed in self.feeds.borrow_mut().iter_mut() {
-        window.add_feed(&feed);
-      }
-
+      // Finally, show the window.
       self.obj().main_window().present();
     }
   }

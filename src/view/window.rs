@@ -16,6 +16,8 @@ use crate::config;
 use crate::model::Feed;
 use crate::view::{FeedPage, FeedRow};
 
+// ---------------------------------------------------------------------------------------
+
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
       @extends gtk::Widget, gtk::Window, adw::Window,
@@ -215,6 +217,8 @@ impl Window {
 
 mod imp {
   use super::*;
+
+  // -------------------------------------------------------------------------------------
 
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/Window.ui")]

@@ -25,7 +25,6 @@ use crate::model::FeedItem;
 #[enum_type(name = "FeedState")]
 pub enum FeedState {
   EmptyURL,
-  DownloadPending,
   DownloadStarted,
   DownloadFailed,
   DownloadSucceeded,
@@ -190,6 +189,8 @@ impl Feed {
 
 mod imp {
   use super::*;
+
+  // -------------------------------------------------------------------------------------
 
   // Object holding the state
   #[derive(Debug, Default)]

@@ -13,7 +13,7 @@ use adw::{prelude::*, subclass::prelude::*};
 use gtk::{glib, CompositeTemplate};
 
 use crate::model::{Feed, FeedState};
-
+// ---------------------------------------------------------------------------------------
 glib::wrapper! {
   pub struct FeedRow(ObjectSubclass<imp::FeedRow>)
       @extends adw::ActionRow, adw::PreferencesRow, gtk::ListBoxRow, gtk::Widget,
@@ -66,6 +66,8 @@ impl FeedRow {
 
 mod imp {
   use super::*;
+
+  // -------------------------------------------------------------------------------------
 
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedRow.ui")]

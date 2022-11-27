@@ -24,6 +24,7 @@ use once_cell::sync::Lazy;
 pub static RUNTIME: Lazy<tokio::runtime::Runtime> =
   Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
+// ---------------------------------------------------------------------------------------
 // The main method of BingeRSS calls some initialization routines and finally runs an
 // instance of out custom application class.
 fn main() {

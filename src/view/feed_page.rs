@@ -13,7 +13,7 @@ use adw::prelude::*;
 use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
 
 use crate::model::{Feed, FeedItem, FeedState};
-
+// ---------------------------------------------------------------------------------------
 glib::wrapper! {
   pub struct FeedPage(ObjectSubclass<imp::FeedPage>)
       @extends gtk::Widget, gtk::Box,
@@ -47,19 +47,24 @@ impl FeedPage {
       Some("state"),
       glib::clone!(@weak self as this => move |feed, _| {
 
+        let state = feed.get_state().clone();
+
         this.imp().no_url_message.set_visible(false);
         this.imp().connection_error_message.set_visible(false);
         this.imp().feed_items.set_visible(true);
 
-        if feed.get_state().clone() == FeedState::EmptyURL {
+        if state == FeedState::EmptyURL {
           this.imp().no_url_message.set_visible(true);
           this.imp().feed_items.set_visible(false);
-        } else if feed.get_state().clone() == FeedState::DownloadFailed {
+        } else if state == FeedState::DownloadFailed {
           this.imp().connection_error_message.set_visible(true);
           this.imp().feed_items.set_visible(false);
-        } else if feed.get_state().clone() == FeedState::DownloadSucceeded {
-          this.set_items(feed.get_items().as_ref());
+        } else if state == FeedState::DownloadSucceeded {
           this.imp().feed_items.set_visible(true);
+        }
+
+        if state != FeedState::DownloadStarted {
+          this.set_items(feed.get_items().as_ref());
         }
       }),
     );
@@ -138,6 +143,8 @@ impl FeedPage {
 
 mod imp {
   use super::*;
+
+  // -------------------------------------------------------------------------------------
 
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedPage.ui")]
