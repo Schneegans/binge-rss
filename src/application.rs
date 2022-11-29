@@ -48,6 +48,7 @@ impl Application {
   //   app.show-feed-page(): If folded, this shows the pane of the main leaflet.
   //   app.undo-remove(id):  Re-adds a previously deleted feed. The ID of the
   //                         to-be-re-added feed has to be given as parameter.
+  //   app.refresh():        Re-downloads all feeds.
   fn setup_actions(&self) {
     let window = self.main_window();
 
@@ -170,6 +171,15 @@ impl Application {
       let action = gio::SimpleAction::new("show-feed-page", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
         window.show_feed_page();
+      }));
+      self.add_action(&action);
+    }
+
+    // The app.refresh() action simply downloads all configured feeds.
+    {
+      let action = gio::SimpleAction::new("refresh", None);
+      action.connect_activate(glib::clone!(@weak self as this => move |_, _| {
+        this.imp().feeds.borrow().iter().for_each(|f| f.download());
       }));
       self.add_action(&action);
     }
