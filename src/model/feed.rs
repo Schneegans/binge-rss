@@ -243,7 +243,6 @@ mod imp {
   // Object holding the internal state of a Feed.
   #[derive(Debug, Default)]
   pub struct Feed {
-
     // This is set at construction time and unique amongst all feeds.
     pub id: RefCell<String>,
 
@@ -267,7 +266,6 @@ mod imp {
   }
 
   impl ObjectImpl for Feed {
-
     // Whenever a Feed is constructed, we generate a unique ID for it.
     fn constructed(&self) {
       self.parent_constructed();
