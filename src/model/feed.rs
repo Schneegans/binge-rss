@@ -21,22 +21,6 @@ use std::{
 use crate::model::FeedItem;
 
 // ---------------------------------------------------------------------------------------
-#[derive(Debug, Copy, Clone, PartialEq, Eq, glib::Enum)]
-#[enum_type(name = "FeedState")]
-pub enum FeedState {
-  EmptyURL,
-  DownloadStarted,
-  DownloadFailed,
-  DownloadSucceeded,
-}
-
-impl Default for FeedState {
-  fn default() -> Self {
-    FeedState::EmptyURL
-  }
-}
-
-// ---------------------------------------------------------------------------------------
 // The StoredFeed is used for storing the currently configured feeds in the settings.
 // An array of such structs is converted from and to JSON using serde and stored under the
 // GSettings key /io/github/schneegans/BingeRSS/feeds.
@@ -55,6 +39,24 @@ pub struct StoredFeed {
   // The currently configured filter for this feed.
   #[serde(default, skip_serializing_if = "String::is_empty")]
   pub filter: String,
+}
+
+// ---------------------------------------------------------------------------------------
+// Each Feed is in either of these states. Initially, the URL is empty.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, glib::Enum)]
+#[enum_type(name = "FeedState")]
+pub enum FeedState {
+  EmptyURL,
+  DownloadPending,
+  DownloadStarted,
+  DownloadFailed,
+  DownloadSucceeded,
+}
+
+impl Default for FeedState {
+  fn default() -> Self {
+    FeedState::EmptyURL
+  }
 }
 
 // ---------------------------------------------------------------------------------------
@@ -80,6 +82,10 @@ impl Feed {
     if self.imp().download_source_id.borrow().is_some() {
       let source_id = self.imp().download_source_id.borrow_mut().take();
       source_id.unwrap().remove();
+    }
+
+    if self.get_state().eq(&FeedState::EmptyURL) {
+      return;
     }
 
     self.set_property("state", FeedState::DownloadStarted);
@@ -262,6 +268,7 @@ mod imp {
           if self.url.borrow().is_empty() {
             self.obj().set_property("state", FeedState::EmptyURL);
           } else {
+            self.obj().set_property("state", FeedState::DownloadPending);
             self.obj().download();
           }
         }
