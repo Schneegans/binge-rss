@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------------------- #
 
 # SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: CC0-1.0
 
 global_conf = configuration_data()
 global_conf.set_quoted('app-id', app_id)

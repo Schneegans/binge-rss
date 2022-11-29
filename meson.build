@@ -7,7 +7,7 @@
 # -------------------------------------------------------------------------------------- #
 
 # SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: CC0-1.0
 
 project(
   'binge-rss',

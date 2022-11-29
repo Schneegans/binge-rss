@@ -185,11 +185,19 @@ impl Application {
     }
   }
 
-  fn load_data(&self) {
+  // The feeds are stored in a JSON string under the settings key
+  // io.github.schneegans.bingerss.feeds. This method retrieves the JSON string, and
+  // creates Feed objects accordingly. The newly created Feed objects are added to the
+  // user interface.
+  fn load_feeds(&self) {
+    // Load the JSON string.
     let data = self.imp().settings.string("feeds");
+
+    // Parse it.
     let stored_feeds: Vec<StoredFeed> =
       serde_json::from_str(data.as_str()).expect("valid json");
 
+    // Create a Feed for each StoredFeed.
     self.imp().feeds.replace(
       stored_feeds
         .iter()
@@ -197,12 +205,17 @@ impl Application {
         .collect(),
     );
 
+    // Add all feeds to the user interface.
     for feed in self.imp().feeds.borrow_mut().iter_mut() {
       self.main_window().add_feed(&feed);
     }
   }
 
-  fn save_data(&self) {
+  // The feeds are stored in a JSON string under the settings key
+  // io.github.schneegans.bingerss.feeds. This method converts all current Feeds to a JSON
+  // string, and saves this data under the settings key.
+  fn save_feeds(&self) {
+    // Create a StoredFeed for each Feed.
     let stored_feeds: Vec<StoredFeed> = self
       .imp()
       .feeds
@@ -216,7 +229,10 @@ impl Application {
       })
       .collect();
 
+    // Serialize the data to JSON.
     let json = serde_json::to_string(&stored_feeds).unwrap();
+
+    // Write the JSON string to the settings.
     self
       .imp()
       .settings
@@ -268,6 +284,10 @@ mod imp {
   impl ObjectImpl for Application {}
 
   impl ApplicationImpl for Application {
+    // This is called when the application is started and for each subsequent attempt of
+    // the user to start another instance of the application. In the latter cases, no new
+    // application instance is opened, instead this method is called on the primary
+    // instance.
     fn activate(&self) {
       // If the app is already running and we created a window before, simply show it.
       if let Some(window) = self.window.upgrade() {
@@ -291,7 +311,7 @@ mod imp {
       // Save the current feeds whenever the window gets closed.
       window.connect_close_request(
         glib::clone!(@weak self as this => @default-return gtk::Inhibit(false), move |_| {
-          this.obj().save_data();
+          this.obj().save_feeds();
           gtk::Inhibit(false)
         }),
       );
@@ -300,7 +320,7 @@ mod imp {
       self.obj().setup_actions();
 
       // Load all configured feeds from the settings.
-      self.obj().load_data();
+      self.obj().load_feeds();
 
       // Finally, show the window.
       self.obj().main_window().present();
