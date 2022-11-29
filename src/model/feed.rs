@@ -145,7 +145,7 @@ impl Feed {
 
       // Reset the download_source_id.
       this.imp().download_source_id.replace(None);
-      
+
       // Return early if the download failed.
       if result.is_err() {
         this.set_property("state", FeedState::DownloadFailed);
