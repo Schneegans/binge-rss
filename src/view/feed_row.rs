@@ -53,9 +53,9 @@ impl FeedRow {
         this.set_subtitle("");
 
         if state == FeedState::DownloadFailed {
-          this.set_subtitle("Connection failed.");
+          this.set_subtitle("Connection failed");
         } else if state == FeedState::EmptyURL {
-          this.set_subtitle("Empty URL.");
+          this.set_subtitle("Empty URL");
         } else if state == FeedState::DownloadSucceeded {
           this.imp().avatar.set_icon_name(Some("rss-symbolic"));
         }
