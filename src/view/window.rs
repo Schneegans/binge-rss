@@ -17,7 +17,11 @@ use crate::model::Feed;
 use crate::view::{FeedPage, FeedRow};
 
 // ---------------------------------------------------------------------------------------
-
+// The Window is derived from adw::Window. It primarily contains an adw::Leaflet with two
+// panes: On the left, there is a sidebar with a list of all configured feeds, on the
+// right there are details for the currently selected feed. The sidebar is realized as a
+// gtk::ListBox full of custom FeedRows, the feed details page is a gtk::Stack containing
+// a custom FeedPage for each feed.
 glib::wrapper! {
   pub struct Window(ObjectSubclass<imp::Window>)
       @extends gtk::Widget, gtk::Window, adw::Window,
@@ -33,41 +37,25 @@ impl Window {
 
   // ---------------------------------------------------------------------- public methods
 
-  pub fn get_selected_id(&self) -> Option<String> {
-    match self.imp().feed_list.selected_row() {
-      None => None,
-      Some(row) => Some(row.widget_name().as_str().to_string()),
-    }
-  }
-
-  pub fn get_selected_title(&self) -> Option<String> {
-    match self.imp().feed_list.selected_row() {
-      None => None,
-      Some(row) => Some(
-        row
-          .downcast::<adw::ActionRow>()
-          .unwrap()
-          .title()
-          .as_str()
-          .into(),
-      ),
-    }
-  }
-
+  // This adds a new feed to the Window. The method will create a FeedRow for the list on
+  // the left and a FeedPage for the details on the right. The ID of the feed is stored in
+  // the widget names of the FeedRow and FeedPage. This allows us to later find the
+  // widgets easily.
   pub fn add_feed(&self, feed: &Feed) {
     println!("add {}", feed.get_id());
-    self.imp().no_feeds_message.set_visible(false);
-    self.imp().leaflet.set_can_unfold(true);
 
+    // If there are no feeds, the right pane of the main leaflet should not be visible. So
+    // if a feed is added, we can make the leaflet unfoldable again.
+    self.imp().leaflet.set_can_unfold(true);
+    self.imp().no_feeds_message.set_visible(false);
+
+    // Add a new FeedRow to the list on the left.
     let feed_row = FeedRow::new();
     feed_row.set_feed(feed);
     feed_row.set_widget_name(&feed.get_id());
     self.imp().feed_list.append(&feed_row);
 
-    feed
-      .bind_property("title", &self.imp().header_label.get(), "label")
-      .build();
-
+    // Re-sort the FeedRows if the title of the Feed changed.
     feed.connect_notify_local(
       Some("title"),
       glib::clone!(@weak self as this => move |_, _| {
@@ -75,6 +63,12 @@ impl Window {
       }),
     );
 
+    // Also update the title of the headerbar if the title of the Feed changed.
+    feed
+      .bind_property("title", &self.imp().header_label.get(), "label")
+      .build();
+
+    // Now add the FeedPage to show the Feed's detailed information.
     let feed_page = FeedPage::new();
     feed_page.set_feed(feed);
     self
@@ -82,44 +76,35 @@ impl Window {
       .feed_details
       .add_named(&feed_page, Some(&feed.get_id()));
 
+    // Show the FeedPage if the FeedRow is activated.
     feed_row.connect_activated(
       glib::clone!(@weak self as this, @weak feed_page => move |feed_row| {
-        this.show_details_page();
+        this.show_feed_pages();
         this.imp().feed_details.set_visible_child(&feed_page);
         this.imp().header_label.set_label(&feed_row.title());
       }),
     );
 
+    // Always select the last added feed.
     self.imp().feed_list.select_row(Some(&feed_row));
     self.imp().feed_details.set_visible_child(&feed_page);
     self.imp().header_label.set_label(&feed_row.title());
 
+    // Make sure to update all widgets by emitting a state-change once.
     feed.notify("state");
-
-    self.imp().feed_list.invalidate_sort();
   }
 
-  pub fn show_toast(
-    &self,
-    title: &str,
-    button_label: &str,
-    action_name: &str,
-    action_target: glib::Variant,
-  ) {
-    let toast = adw::Toast::builder()
-      .title(title)
-      .action_name(action_name)
-      .action_target(&action_target)
-      .button_label(button_label)
-      .build();
-    self.imp().toast_overlay.add_toast(&toast);
-  }
-
+  // This method removes the currently selected feed from the user interface and returns
+  // its ID. The next feed in the sidebar will become selected thereafter. If there is no
+  // feed left, nothing will happen and the method will return None.
   pub fn remove_selected_feed(&self) -> Option<String> {
     let list = &self.imp().feed_list;
     let row = list.selected_row()?;
     let id = row.property::<String>("name");
 
+    // Choose the item which will be selected after this operation. Usually, it will be
+    // the feed below the currently selected feed. However, if the last feed is to be
+    // deleted, we have to select the one above it.
     let mut next_row: Option<gtk::ListBoxRow> = None;
 
     if row.next_sibling().is_some() {
@@ -140,44 +125,71 @@ impl Window {
       );
     }
 
+    // Remove the FeedRow from the sidebar.
     list.remove(&row);
 
+    // Remove the FeedPage from the details stack.
     let page = self.get_feed_page(&id)?;
     self.imp().feed_details.remove(&page);
 
+    // Clear the headerbar label.
     self.imp().header_label.set_label("");
 
+    // If there is a next row to select, select it. Else show an info message about
+    // creating the first feed.
     if next_row.is_some() {
       next_row.unwrap().activate();
     } else {
       self.imp().no_feeds_message.set_visible(true);
       self.imp().leaflet.set_can_unfold(false);
-      self.show_feed_page();
+      self.show_feed_rows();
     }
 
+    // Go to the sidebar pane if the leaflet is currently folded.
     if self.imp().leaflet.is_folded() {
-      self.show_feed_page();
+      self.show_feed_rows();
     }
 
     Some(id)
   }
 
-  pub fn show_feed_page(&self) {
+  // If the leaflet is folded, this will show the left sidebar area with the FeedRows.
+  pub fn show_feed_rows(&self) {
     self
       .imp()
       .leaflet
       .set_visible_child(&self.imp().feed_list_page.get());
   }
 
-  pub fn show_details_page(&self) {
+  // If the leaflet is folded, this will show the right area with the FeedPages.
+  pub fn show_feed_pages(&self) {
     self
       .imp()
       .leaflet
       .set_visible_child(&self.imp().feed_details_page.get());
   }
 
+  // Shows a toast with the given message at the bottom of the screen.
+  pub fn show_toast(
+    &self,
+    title: &str,
+    button_label: &str,
+    action_name: &str,
+    action_target: &glib::Variant,
+  ) {
+    let toast = adw::Toast::builder()
+      .title(title)
+      .action_name(action_name)
+      .action_target(action_target)
+      .button_label(button_label)
+      .build();
+    self.imp().toast_overlay.add_toast(&toast);
+  }
+
   // --------------------------------------------------------------------- private methods
 
+  // Searches the gtk::Stack containing all FeedPages for the page corresponding to the
+  // feed with the given ID. This will return None if no such page is found.
   fn get_feed_page(&self, id: &String) -> Option<FeedPage> {
     let page = self.imp().feed_details.child_by_name(id.as_str());
 
@@ -188,6 +200,7 @@ impl Window {
     }
   }
 
+  // Saves the current window size in the settings.
   fn save_window_size(&self) -> Result<(), glib::BoolError> {
     let (width, height) = self.default_size();
 
@@ -202,6 +215,7 @@ impl Window {
     Ok(())
   }
 
+  // Restores the window size from the settings.
   fn load_window_size(&self) {
     let width = self.imp().settings.int("window-width");
     let height = self.imp().settings.int("window-height");
@@ -219,7 +233,7 @@ mod imp {
   use super::*;
 
   // -------------------------------------------------------------------------------------
-
+  // The structure of the window widget is defined in the Window.ui file.
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/Window.ui")]
   pub struct Window {
@@ -274,11 +288,16 @@ mod imp {
   }
 
   impl ObjectImpl for Window {
+    // Most components of this custom widget are defined in the UI file. However, some
+    // things have to be set up in code. This is done here, whenever a new Window is
+    // constructed.
     fn constructed(&self) {
       self.parent_constructed();
 
+      // Restore the window size from the previous session.
       self.obj().load_window_size();
 
+      // Make sure that the FeedRows are sorted alphabetically.
       self.feed_list.set_sort_func(|a, b| -> gtk::Ordering {
         let a = a
           .downcast_ref::<adw::ActionRow>()
@@ -305,6 +324,8 @@ mod imp {
   impl WidgetImpl for Window {}
 
   impl WindowImpl for Window {
+    // Save the window size whenever the window is closed. We use this to be able to
+    // restore the window size in the next session.
     fn close_request(&self) -> gtk::Inhibit {
       if let Err(err) = self.obj().save_window_size() {
         println!("Failed to save window state, {}", &err);

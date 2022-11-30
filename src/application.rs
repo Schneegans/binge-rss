@@ -45,7 +45,7 @@ impl Application {
   //   app.quit():           Quits the application.
   //   app.add-feed():       Adds a new empty feed.
   //   app.remove-feed():    Removes the currently selected feed and shows a undo-toast.
-  //   app.show-feed-page(): If folded, this shows the pane of the main leaflet.
+  //   app.show-feed-rows(): If folded, this shows the pane of the main leaflet.
   //   app.undo-remove(id):  Re-adds a previously deleted feed. The ID of the
   //                         to-be-re-added feed has to be given as parameter.
   //   app.refresh():        Re-downloads all feeds.
@@ -128,7 +128,7 @@ impl Application {
             format!("Removed '{}'", this.imp().feeds.borrow()[i].get_title()).as_str(),
             "Undo",
             "app.undo-remove",
-            id.unwrap().to_variant());
+            &id.unwrap().to_variant());
 
           // Remove the feed from the list of all feeds and add it to the list of all
           // removed feeds instead. This will allow us to later undo the deletion of the
@@ -168,9 +168,9 @@ impl Application {
     // If the main leaflet is folded, this will show the left pane. This is used for the
     // back-navigation button in the headerbar.
     {
-      let action = gio::SimpleAction::new("show-feed-page", None);
+      let action = gio::SimpleAction::new("show-feed-rows", None);
       action.connect_activate(glib::clone!(@weak window => move |_, _| {
-        window.show_feed_page();
+        window.show_feed_rows();
       }));
       self.add_action(&action);
     }

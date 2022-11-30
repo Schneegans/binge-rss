@@ -121,7 +121,7 @@ SPDX-License-Identifier: MIT
                     <child type="start">
                       <object class="GtkButton">
                         <property name="icon-name">go-previous-symbolic</property>
-                        <property name="action-name">app.show-feed-page</property>
+                        <property name="action-name">app.show-feed-rows</property>
                         <binding name="visible">
                           <lookup name="folded">leaflet</lookup>
                         </binding>
