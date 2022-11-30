@@ -13,7 +13,12 @@ use adw::prelude::*;
 use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
 
 use crate::model::{Feed, FeedItem, FeedState};
+
 // ---------------------------------------------------------------------------------------
+// The FeedPage is derived from gtk::Box. There is one FeedPage shown on the right for
+// each feed. It shows text entries for the feed's title, URL, and filter as well as the
+// actual feed items once downloaded. Depending on the Feed's state, it can also display
+// several info messages.
 glib::wrapper! {
   pub struct FeedPage(ObjectSubclass<imp::FeedPage>)
       @extends gtk::Widget, gtk::Box,
@@ -29,115 +34,62 @@ impl FeedPage {
 
   // ---------------------------------------------------------------------- public methods
 
+  // This assigns a Feed to the FeedPage. The method will bind some properties of the
+  // FeedPage to the properties of the Feed.
   pub fn set_feed(&self, feed: &Feed) {
+    // Sync the Feed's title to the current value of the title entry field.
     feed
-      .bind_property("title", &self.imp().feed_name.get(), "text")
-      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
-      .build();
-    feed
-      .bind_property("url", &self.imp().feed_url.get(), "text")
-      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
-      .build();
-    feed
-      .bind_property("filter", &self.imp().feed_filter.get(), "text")
+      .bind_property("title", &self.imp().title_entry.get(), "text")
       .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
       .build();
 
+    // Sync the Feed's URL to the current value of the URL entry field.
+    feed
+      .bind_property("url", &self.imp().url_entry.get(), "text")
+      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
+      .build();
+
+    // Sync the Feed's filter to the current value of the filter entry field.
+    feed
+      .bind_property("filter", &self.imp().filter_entry.get(), "text")
+      .flags(glib::BindingFlags::SYNC_CREATE | glib::BindingFlags::BIDIRECTIONAL)
+      .build();
+
+    // Make sure that the actual feed list is filtered whenever the filter value changes.
+    feed
+      .bind_property("filter", &self.imp().filter, "search")
+      .flags(glib::BindingFlags::SYNC_CREATE)
+      .build();
+
+    // Depending on the Feed's state, we show and hide several components of the FeedPage.
     feed.connect_notify_local(
       Some("state"),
       glib::clone!(@weak self as this => move |feed, _| {
 
-        let state = feed.get_state().clone();
-
         this.imp().no_url_message.set_visible(false);
         this.imp().connection_error_message.set_visible(false);
-        this.imp().feed_items.set_visible(true);
+        this.imp().feed_items_box.set_visible(true);
+
+        let state = feed.get_state().clone();
 
         if state == FeedState::EmptyURL {
           this.imp().no_url_message.set_visible(true);
-          this.imp().feed_items.set_visible(false);
+          this.imp().feed_items_box.set_visible(false);
         } else if state == FeedState::DownloadFailed {
           this.imp().connection_error_message.set_visible(true);
-          this.imp().feed_items.set_visible(false);
+          this.imp().feed_items_box.set_visible(false);
         } else if state == FeedState::DownloadSucceeded {
-          this.imp().feed_items.set_visible(true);
+          this.imp().feed_items_box.set_visible(true);
         }
 
+        // Update the items. We do not want to clear the item list if the download started
+        // in order to reduce visual noise.
         if state != FeedState::DownloadStarted {
-          this.set_items(feed.get_items().as_ref());
+          this.imp().model.remove_all();
+          this.imp().model.extend_from_slice(&feed.get_items().as_ref());
         }
       }),
     );
-  }
-
-  pub fn set_items(&self, items: &Vec<FeedItem>) {
-    let factory = gtk::SignalListItemFactory::new();
-    factory.connect_setup(move |_, list_item| {
-      const PADDING: i32 = 12;
-
-      let label = gtk::Label::builder()
-        .halign(gtk::Align::Start)
-        .hexpand(true)
-        .ellipsize(pango::EllipsizeMode::End)
-        .margin_top(PADDING)
-        .margin_bottom(PADDING)
-        .margin_start(PADDING)
-        .margin_end(PADDING)
-        .build();
-
-      let icon = gtk::Image::builder()
-        .margin_top(PADDING)
-        .margin_bottom(PADDING)
-        .margin_start(PADDING)
-        .margin_end(PADDING)
-        .icon_name("adw-external-link-symbolic")
-        .build();
-
-      let hbox = gtk::Box::builder().build();
-      hbox.append(&label);
-      hbox.append(&icon);
-
-      list_item.set_activatable(true);
-      list_item.set_child(Some(&hbox));
-    });
-
-    factory.connect_bind(move |_, list_item| {
-      // Get `FeedItem` from `ListItem`
-      let feed_item = list_item
-        .item()
-        .expect("The item has to exist.")
-        .downcast::<FeedItem>()
-        .expect("The item has to be a `FeedItem`.");
-
-      let title = feed_item.get_title();
-
-      // Get `Label` from `ListItem`
-      let label = list_item
-        .child()
-        .unwrap()
-        .downcast::<gtk::Box>()
-        .unwrap()
-        .first_child()
-        .unwrap()
-        .downcast::<gtk::Label>()
-        .unwrap();
-
-      label.set_label(&title.to_string());
-    });
-
-    // Add the vector to the model
-    self.imp().model.remove_all();
-    self.imp().model.extend_from_slice(&items);
-
-    let filter_model =
-      gtk::FilterListModel::new(Some(&self.imp().model), Some(&self.imp().filter));
-    let selection_model = gtk::NoSelection::new(Some(&filter_model));
-    self
-      .imp()
-      .feed_item_list_view
-      .set_model(Some(&selection_model));
-    self.imp().feed_item_list_view.set_factory(Some(&factory));
-    self.imp().feed_item_list_view.set_css_classes(&["card"]);
   }
 }
 
@@ -145,18 +97,18 @@ mod imp {
   use super::*;
 
   // -------------------------------------------------------------------------------------
-
+  // The structure of this custom widget is defined in the FeedPage.ui file.
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedPage.ui")]
   pub struct FeedPage {
     #[template_child]
-    pub feed_name: TemplateChild<adw::EntryRow>,
+    pub title_entry: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub feed_url: TemplateChild<adw::EntryRow>,
+    pub url_entry: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub feed_filter: TemplateChild<adw::EntryRow>,
+    pub filter_entry: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub feed_items: TemplateChild<gtk::Box>,
+    pub feed_items_box: TemplateChild<gtk::Box>,
     #[template_child]
     pub feed_item_list_view: TemplateChild<gtk::ListView>,
     #[template_child]
@@ -171,10 +123,10 @@ mod imp {
   impl Default for FeedPage {
     fn default() -> Self {
       Self {
-        feed_name: TemplateChild::default(),
-        feed_url: TemplateChild::default(),
-        feed_filter: TemplateChild::default(),
-        feed_items: TemplateChild::default(),
+        title_entry: TemplateChild::default(),
+        url_entry: TemplateChild::default(),
+        filter_entry: TemplateChild::default(),
+        feed_items_box: TemplateChild::default(),
         feed_item_list_view: TemplateChild::default(),
         connection_error_message: TemplateChild::default(),
         no_url_message: TemplateChild::default(),
@@ -208,13 +160,83 @@ mod imp {
   }
 
   impl ObjectImpl for FeedPage {
+    // Most components of this custom widget are defined in the UI file. However, some
+    // things have to be set up in code. This is done here, whenever a new FeedPage is
+    // constructed.
     fn constructed(&self) {
       self.parent_constructed();
 
+      // Create a factory for the feed item list view.
+      let factory = gtk::SignalListItemFactory::new();
+
+      // Whenever a new feed item comes into view, we create a simple box with a label and
+      // an icon.
+      factory.connect_setup(move |_, list_item| {
+        const PADDING: i32 = 12;
+
+        let label = gtk::Label::builder()
+          .halign(gtk::Align::Start)
+          .hexpand(true)
+          .ellipsize(pango::EllipsizeMode::End)
+          .margin_top(PADDING)
+          .margin_bottom(PADDING)
+          .margin_start(PADDING)
+          .margin_end(PADDING)
+          .build();
+
+        let icon = gtk::Image::builder()
+          .margin_top(PADDING)
+          .margin_bottom(PADDING)
+          .margin_start(PADDING)
+          .margin_end(PADDING)
+          .icon_name("adw-external-link-symbolic")
+          .build();
+
+        let hbox = gtk::Box::builder().build();
+        hbox.append(&label);
+        hbox.append(&icon);
+
+        list_item.set_activatable(true);
+        list_item.set_child(Some(&hbox));
+      });
+
+      // Whenever an existing item of the list must be updated to show data for another
+      // FeedItem, we only have to update the label.
+      factory.connect_bind(move |_, list_item| {
+        // Cast the ListItem to the actual FeedItem.
+        let feed_item = list_item.item().unwrap().downcast::<FeedItem>().unwrap();
+
+        // Get GtkLabel from the ListItem.
+        let label = list_item
+          .child()
+          .unwrap()
+          .downcast::<gtk::Box>()
+          .unwrap()
+          .first_child()
+          .unwrap()
+          .downcast::<gtk::Label>()
+          .unwrap();
+
+        // Make the label show the Feed's title.
+        label.set_label(&feed_item.get_title().to_string());
+      });
+
+      // Wire up everything.
+      let filter_model = gtk::FilterListModel::new(Some(&self.model), Some(&self.filter));
+      let selection_model = gtk::NoSelection::new(Some(&filter_model));
+      self.feed_item_list_view.set_model(Some(&selection_model));
+      self.feed_item_list_view.set_factory(Some(&factory));
+
+      // Make sure that the list view looks beautiful.
+      self.feed_item_list_view.set_css_classes(&["card"]);
+
+      // Make the cursor change to a pointer if hovering over the item list. This
+      // increases the affordance of clickable links.
       self
         .feed_item_list_view
         .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
 
+      // Open the URL of the item if activated.
       self
         .feed_item_list_view
         .connect_activate(|feed_item_list_view, pos| {
@@ -232,12 +254,6 @@ mod imp {
             println!("Failed to open URL {}", url);
           }
         });
-
-      self
-        .feed_filter
-        .connect_changed(glib::clone!(@weak self as this => move |entry| {
-          this.obj().imp().filter.set_search(Some(&entry.text()));
-        }));
     }
   }
 

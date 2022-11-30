@@ -80,7 +80,7 @@ mod imp {
   use super::*;
 
   // -------------------------------------------------------------------------------------
-
+  // The structure of this custom widget is defined in the FeedRow.ui file.
   #[derive(Debug, CompositeTemplate)]
   #[template(resource = "/io/github/schneegans/BingeRSS/ui/FeedRow.ui")]
   pub struct FeedRow {

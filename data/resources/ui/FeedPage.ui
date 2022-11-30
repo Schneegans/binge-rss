@@ -26,17 +26,17 @@ SPDX-License-Identifier: MIT
                     <child>
                       <object class="GtkListBox" id="filters">
                         <child>
-                          <object class="AdwEntryRow" id="feed_name">
+                          <object class="AdwEntryRow" id="title_entry">
                             <property name="title">Name</property>
                           </object>
                         </child>
                         <child>
-                          <object class="AdwEntryRow" id="feed_url">
+                          <object class="AdwEntryRow" id="url_entry">
                             <property name="title">URL</property>
                           </object>
                         </child>
                         <child>
-                          <object class="AdwEntryRow" id="feed_filter">
+                          <object class="AdwEntryRow" id="filter_entry">
                             <property name="title">Filter</property>
                           </object>
                         </child>
@@ -67,7 +67,7 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="GtkBox" id="feed_items">
+                  <object class="GtkBox" id="feed_items_box">
                     <property name="orientation">vertical</property>
                     <child>
                       <object class="GtkLabel">

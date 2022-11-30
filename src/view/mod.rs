@@ -9,6 +9,8 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
+// This module contains some objects which are components of the user interface.
+
 mod feed_page;
 mod feed_row;
 mod window;
