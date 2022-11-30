@@ -9,6 +9,9 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
+// This module contains some objects which store the data which is shown in the user
+// interface.
+
 mod feed;
 mod feed_item;
 
