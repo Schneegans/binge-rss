@@ -9,8 +9,8 @@
 // SPDX-FileCopyrightText: Simon Schneegans <code@simonschneegans.de>
 // SPDX-License-Identifier: MIT
 
-use adw::prelude::*;
-use gtk::{gdk, gio, glib, pango, subclass::prelude::*, CompositeTemplate};
+use adw::{prelude::*, subclass::prelude::*};
+use gtk::{gdk, gio, glib, CompositeTemplate};
 
 use crate::model::{Feed, FeedItem, FeedState};
 
@@ -68,18 +68,18 @@ impl FeedPage {
 
         this.imp().no_url_message.set_visible(false);
         this.imp().connection_error_message.set_visible(false);
-        this.imp().feed_items_box.set_visible(true);
+        this.imp().feed_items_group.set_visible(true);
 
         let state = feed.get_state().clone();
 
         if state == FeedState::EmptyURL {
           this.imp().no_url_message.set_visible(true);
-          this.imp().feed_items_box.set_visible(false);
+          this.imp().feed_items_group.set_visible(false);
         } else if state == FeedState::DownloadFailed {
           this.imp().connection_error_message.set_visible(true);
-          this.imp().feed_items_box.set_visible(false);
+          this.imp().feed_items_group.set_visible(false);
         } else if state == FeedState::DownloadSucceeded {
-          this.imp().feed_items_box.set_visible(true);
+          this.imp().feed_items_group.set_visible(true);
         }
 
         // Update the items. We do not want to clear the item list if the download started
@@ -108,9 +108,9 @@ mod imp {
     #[template_child]
     pub filter_entry: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub feed_items_box: TemplateChild<gtk::Box>,
+    pub feed_items_group: TemplateChild<adw::PreferencesGroup>,
     #[template_child]
-    pub feed_item_list_view: TemplateChild<gtk::ListView>,
+    pub feed_item_list_box: TemplateChild<gtk::ListBox>,
     #[template_child]
     pub connection_error_message: TemplateChild<adw::StatusPage>,
     #[template_child]
@@ -126,8 +126,8 @@ mod imp {
         title_entry: TemplateChild::default(),
         url_entry: TemplateChild::default(),
         filter_entry: TemplateChild::default(),
-        feed_items_box: TemplateChild::default(),
-        feed_item_list_view: TemplateChild::default(),
+        feed_items_group: TemplateChild::default(),
+        feed_item_list_box: TemplateChild::default(),
         connection_error_message: TemplateChild::default(),
         no_url_message: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
@@ -166,93 +166,45 @@ mod imp {
     fn constructed(&self) {
       self.parent_constructed();
 
-      // Create a factory for the feed item list view.
-      let factory = gtk::SignalListItemFactory::new();
-
-      // Whenever a new feed item comes into view, we create a simple box with a label and
-      // an icon.
-      factory.connect_setup(move |_, list_item| {
-        const PADDING: i32 = 12;
-
-        let label = gtk::Label::builder()
-          .halign(gtk::Align::Start)
-          .hexpand(true)
-          .ellipsize(pango::EllipsizeMode::End)
-          .margin_top(PADDING)
-          .margin_bottom(PADDING)
-          .margin_start(PADDING)
-          .margin_end(PADDING)
-          .build();
-
-        let icon = gtk::Image::builder()
-          .margin_top(PADDING)
-          .margin_bottom(PADDING)
-          .margin_start(PADDING)
-          .margin_end(PADDING)
-          .icon_name("adw-external-link-symbolic")
-          .build();
-
-        let hbox = gtk::Box::builder().build();
-        hbox.append(&label);
-        hbox.append(&icon);
-
-        list_item.set_activatable(true);
-        list_item.set_child(Some(&hbox));
-      });
-
-      // Whenever an existing item of the list must be updated to show data for another
-      // FeedItem, we only have to update the label.
-      factory.connect_bind(move |_, list_item| {
-        // Cast the ListItem to the actual FeedItem.
-        let feed_item = list_item.item().unwrap().downcast::<FeedItem>().unwrap();
-
-        // Get GtkLabel from the ListItem.
-        let label = list_item
-          .child()
-          .unwrap()
-          .downcast::<gtk::Box>()
-          .unwrap()
-          .first_child()
-          .unwrap()
-          .downcast::<gtk::Label>()
-          .unwrap();
-
-        // Make the label show the Feed's title.
-        label.set_label(&feed_item.get_title().to_string());
-      });
-
       // Wire up everything.
       let filter_model = gtk::FilterListModel::new(Some(&self.model), Some(&self.filter));
-      let selection_model = gtk::NoSelection::new(Some(&filter_model));
-      self.feed_item_list_view.set_model(Some(&selection_model));
-      self.feed_item_list_view.set_factory(Some(&factory));
-
-      // Make sure that the list view looks beautiful.
-      self.feed_item_list_view.set_css_classes(&["card"]);
-
-      // Make the cursor change to a pointer if hovering over the item list. This
-      // increases the affordance of clickable links.
+      let slice_model = gtk::SliceListModel::new(Some(&filter_model), 0, 50);
+      let selection_model = gtk::NoSelection::new(Some(&slice_model));
       self
-        .feed_item_list_view
-        .set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
+        .feed_item_list_box
+        .bind_model(Some(&selection_model), move |item| {
+          let title: String = item.property("title");
 
-      // Open the URL of the item if activated.
-      self
-        .feed_item_list_view
-        .connect_activate(|feed_item_list_view, pos| {
-          let item = feed_item_list_view
-            .model()
-            .unwrap()
-            .item(pos)
-            .unwrap()
-            .downcast::<FeedItem>()
-            .unwrap();
-          let url = item.get_url();
-          let result =
-            gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
-          if result.is_err() {
-            println!("Failed to open URL {}", url);
-          }
+          let row = adw::ActionRow::builder()
+            .title(&title)
+            .title_lines(1)
+            .selectable(false)
+            .activatable(true)
+            .use_markup(false)
+            .build();
+
+          let icon = gtk::Image::builder()
+            .icon_name("adw-external-link-symbolic")
+            .build();
+
+          row.add_suffix(&icon);
+
+          let url: String = item.property("url");
+
+          row.connect_activated(move |_| {
+            let result =
+              gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
+            if result.is_err() {
+              println!("Failed to open URL {}", url);
+            }
+          });
+
+          // Make the cursor change to a pointer if hovering over the item list. This
+          // increases the affordance of clickable links.
+          row.set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
+
+          let result = row.ancestor(gtk::Widget::static_type());
+          result.unwrap()
         });
     }
   }

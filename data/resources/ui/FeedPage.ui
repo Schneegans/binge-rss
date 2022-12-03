@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 
                 <child>
                   <object class="AdwPreferencesGroup">
+                    <property name="title">Settings</property>
                     <child>
                       <object class="GtkListBox" id="filters">
                         <child>
@@ -67,22 +68,24 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="GtkBox" id="feed_items_box">
-                    <property name="orientation">vertical</property>
+                  <object class="AdwPreferencesGroup" id="feed_items_group">
+                    <property name="margin_top">12</property>
+                    <property name="title">Recent Items</property>
                     <child>
-                      <object class="GtkLabel">
-                        <property name="label">Recent Items</property>
-                        <property name="halign">start</property>
-                        <property name="margin_top">24</property>
+                      <object class="GtkListBox" id="feed_item_list_box">
+                        <property name="activate_on_single_click">true</property>
+                        <property name="vexpand">true</property>
+                        <child type="placeholder">
+                          <object class="AdwStatusPage">
+                            <property name="vexpand">true</property>
+                            <property name="title">No Items Found</property>
+                            <property name="icon_name">face-sad-symbolic</property>
+                            <property name="description">Currently, no feed items match your filter.</property>
+                          </object>
+                        </child>
                         <style>
-                          <class name="heading" />
+                          <class name="content" />
                         </style>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkListView" id="feed_item_list_view">
-                        <property name="margin_top">12</property>
-                        <property name="single_click_activate">true</property>
                       </object>
                     </child>
                   </object>
