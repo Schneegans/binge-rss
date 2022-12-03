@@ -50,44 +50,80 @@ SPDX-License-Identifier: MIT
                 </child>
 
                 <child>
-                  <object class="AdwStatusPage" id="connection_error_message">
-                    <property name="vexpand">true</property>
-                    <property name="title">Connection Error</property>
-                    <property name="icon_name">network-no-route-symbolic</property>
-                    <property name="description">Please check the URL or your internet connection and try again.</property>
-                  </object>
-                </child>
+                  <object class="GtkStack" id="stack">
+                    <property name="vhomogeneous">false</property>
 
-                <child>
-                  <object class="AdwStatusPage" id="no_url_message">
-                    <property name="vexpand">true</property>
-                    <property name="title">Empty URL</property>
-                    <property name="icon_name">rss-symbolic</property>
-                    <property name="description">Please enter the URL of an ATOM or RSS feed above.</property>
-                  </object>
-                </child>
-
-                <child>
-                  <object class="AdwPreferencesGroup" id="feed_items_group">
-                    <property name="margin_top">12</property>
-                    <property name="title">Recent Items</property>
                     <child>
-                      <object class="GtkListBox" id="feed_item_list_box">
-                        <property name="activate_on_single_click">true</property>
-                        <property name="vexpand">true</property>
-                        <child type="placeholder">
+                      <object class="GtkStackPage">
+                        <property name="name">connection_error_message</property>
+                        <property name="child">
                           <object class="AdwStatusPage">
                             <property name="vexpand">true</property>
-                            <property name="title">No Items Found</property>
-                            <property name="icon_name">face-sad-symbolic</property>
-                            <property name="description">Currently, no feed items match your filter.</property>
+                            <property name="title">Connection Error</property>
+                            <property name="icon_name">network-no-route-symbolic</property>
+                            <property name="description">Please check the URL or your internet connection and try again.</property>
                           </object>
-                        </child>
-                        <style>
-                          <class name="content" />
-                        </style>
+                        </property>
                       </object>
                     </child>
+
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">no_url_message</property>
+                        <property name="child">
+                          <object class="AdwStatusPage">
+                            <property name="vexpand">true</property>
+                            <property name="title">Empty URL</property>
+                            <property name="icon_name">rss-symbolic</property>
+                            <property name="description">Please enter the URL of an ATOM or RSS feed above.</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">spinner</property>
+                        <property name="child">
+                          <object class="GtkSpinner">
+                            <property name="valign">center</property>
+                            <property name="halign">center</property>
+                            <property name="width_request">32</property>
+                            <property name="height_request">32</property>
+                            <property name="spinning">true</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkStackPage">
+                        <property name="name">feed_items</property>
+                        <property name="child">
+                          <object class="AdwPreferencesGroup">
+                            <property name="margin_top">12</property>
+                            <property name="title">Recent Items</property>
+                            <child>
+                              <object class="GtkListBox" id="feed_item_list_box">
+                                <property name="activate_on_single_click">true</property>
+                                <child type="placeholder">
+                                  <object class="AdwStatusPage">
+                                    <property name="height-request">350</property>
+                                    <property name="title">No Items Found</property>
+                                    <property name="icon_name">face-sad-symbolic</property>
+                                    <property name="description">Currently, no feed items match your filter.</property>
+                                  </object>
+                                </child>
+                                <style>
+                                  <class name="content" />
+                                </style>
+                              </object>
+                            </child>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+
                   </object>
                 </child>
 

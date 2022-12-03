@@ -66,28 +66,20 @@ impl FeedPage {
       Some("state"),
       glib::clone!(@weak self as this => move |feed, _| {
 
-        this.imp().no_url_message.set_visible(false);
-        this.imp().connection_error_message.set_visible(false);
-        this.imp().feed_items_group.set_visible(true);
-
         let state = feed.get_state().clone();
 
         if state == FeedState::EmptyURL {
-          this.imp().no_url_message.set_visible(true);
-          this.imp().feed_items_group.set_visible(false);
+          this.imp().stack.set_visible_child_name("no_url_message");
+        } else if state == FeedState::DownloadStarted {
+          this.imp().stack.set_visible_child_name("spinner");
         } else if state == FeedState::DownloadFailed {
-          this.imp().connection_error_message.set_visible(true);
-          this.imp().feed_items_group.set_visible(false);
+          this.imp().stack.set_visible_child_name("connection_error_message");
         } else if state == FeedState::DownloadSucceeded {
-          this.imp().feed_items_group.set_visible(true);
-        }
-
-        // Update the items. We do not want to clear the item list if the download started
-        // in order to reduce visual noise.
-        if state != FeedState::DownloadStarted {
+          this.imp().stack.set_visible_child_name("feed_items");
           this.imp().model.remove_all();
           this.imp().model.extend_from_slice(&feed.get_items().as_ref());
         }
+
       }),
     );
   }
@@ -108,13 +100,9 @@ mod imp {
     #[template_child]
     pub filter_entry: TemplateChild<adw::EntryRow>,
     #[template_child]
-    pub feed_items_group: TemplateChild<adw::PreferencesGroup>,
+    pub stack: TemplateChild<gtk::Stack>,
     #[template_child]
     pub feed_item_list_box: TemplateChild<gtk::ListBox>,
-    #[template_child]
-    pub connection_error_message: TemplateChild<adw::StatusPage>,
-    #[template_child]
-    pub no_url_message: TemplateChild<adw::StatusPage>,
 
     pub model: gio::ListStore,
     pub filter: gtk::StringFilter,
@@ -126,10 +114,8 @@ mod imp {
         title_entry: TemplateChild::default(),
         url_entry: TemplateChild::default(),
         filter_entry: TemplateChild::default(),
-        feed_items_group: TemplateChild::default(),
+        stack: TemplateChild::default(),
         feed_item_list_box: TemplateChild::default(),
-        connection_error_message: TemplateChild::default(),
-        no_url_message: TemplateChild::default(),
         model: gio::ListStore::new(FeedItem::static_type()),
         filter: gtk::StringFilter::builder()
           .ignore_case(true)
