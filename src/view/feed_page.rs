@@ -166,31 +166,33 @@ mod imp {
     fn constructed(&self) {
       self.parent_constructed();
 
-      // Wire up everything.
+      // Wire up everything. We show at most 50 rows, else the performance will degrade
+      // too much. We could use a gtk::ListView, however this would require nesting
+      // directly inside a gtk::ScrolledWindow which in turn would require a redesign of
+      // the user interface.
       let filter_model = gtk::FilterListModel::new(Some(&self.model), Some(&self.filter));
       let slice_model = gtk::SliceListModel::new(Some(&filter_model), 0, 50);
-      let selection_model = gtk::NoSelection::new(Some(&slice_model));
       self
         .feed_item_list_box
-        .bind_model(Some(&selection_model), move |item| {
+        .bind_model(Some(&slice_model), move |item| {
+          // The item's title is shown on each row.
           let title: String = item.property("title");
-
           let row = adw::ActionRow::builder()
             .title(&title)
-            .title_lines(1)
+            .title_lines(2)
             .selectable(false)
             .activatable(true)
             .use_markup(false)
             .build();
 
+          // Add an icon as suffix to each row.
           let icon = gtk::Image::builder()
             .icon_name("adw-external-link-symbolic")
             .build();
-
           row.add_suffix(&icon);
 
+          // Open the item's URL if the row is activated.
           let url: String = item.property("url");
-
           row.connect_activated(move |_| {
             let result =
               gio::AppInfo::launch_default_for_uri(&url, gio::AppLaunchContext::NONE);
@@ -203,8 +205,7 @@ mod imp {
           // increases the affordance of clickable links.
           row.set_cursor(Some(&gdk::Cursor::from_name("pointer", None).unwrap()));
 
-          let result = row.ancestor(gtk::Widget::static_type());
-          result.unwrap()
+          row.ancestor(gtk::Widget::static_type()).unwrap()
         });
     }
   }
