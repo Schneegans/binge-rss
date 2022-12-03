@@ -47,7 +47,6 @@ impl Window {
     // If there are no feeds, the right pane of the main leaflet should not be visible. So
     // if a feed is added, we can make the leaflet unfoldable again.
     self.imp().leaflet.set_can_unfold(true);
-    self.imp().no_feeds_message.set_visible(false);
 
     // Add a new FeedRow to the list on the left.
     let feed_row = FeedRow::new();
@@ -107,22 +106,20 @@ impl Window {
     // deleted, we have to select the one above it.
     let mut next_row: Option<gtk::ListBoxRow> = None;
 
-    if row.next_sibling().is_some() {
-      next_row = Some(
-        row
-          .next_sibling()
-          .unwrap()
-          .downcast::<gtk::ListBoxRow>()
-          .unwrap(),
-      );
+    // We have to check for the existence of the sibling's sibling to learn whether we are
+    // the last row since there is also the no-items-placeholder child.
+    if row.next_sibling().unwrap().next_sibling().is_some() {
+      next_row = row
+        .next_sibling()
+        .unwrap()
+        .downcast::<gtk::ListBoxRow>()
+        .ok();
     } else if row.prev_sibling().is_some() {
-      next_row = Some(
-        row
-          .prev_sibling()
-          .unwrap()
-          .downcast::<gtk::ListBoxRow>()
-          .unwrap(),
-      );
+      next_row = row
+        .prev_sibling()
+        .unwrap()
+        .downcast::<gtk::ListBoxRow>()
+        .ok();
     }
 
     // Remove the FeedRow from the sidebar.
@@ -140,7 +137,6 @@ impl Window {
     if next_row.is_some() {
       next_row.unwrap().activate();
     } else {
-      self.imp().no_feeds_message.set_visible(true);
       self.imp().leaflet.set_can_unfold(false);
       self.show_feed_rows();
     }
@@ -251,8 +247,6 @@ mod imp {
     pub header_label: TemplateChild<gtk::Label>,
     #[template_child]
     pub feed_details: TemplateChild<gtk::Stack>,
-    #[template_child]
-    pub no_feeds_message: TemplateChild<adw::StatusPage>,
     pub settings: gio::Settings,
   }
 
@@ -266,7 +260,6 @@ mod imp {
         feed_list: TemplateChild::default(),
         header_label: TemplateChild::default(),
         feed_details: TemplateChild::default(),
-        no_feeds_message: TemplateChild::default(),
         settings: gio::Settings::new(config::APP_ID),
       }
     }

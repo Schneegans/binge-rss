@@ -78,17 +78,18 @@ SPDX-License-Identifier: MIT
                         <property name="orientation">vertical</property>
                         <child>
                           <object class="GtkListBox" id="feed_list">
+                            <property name="vexpand">true</property>
+                            <child type="placeholder">
+                              <object class="AdwStatusPage">
+                                <property name="vexpand">true</property>
+                                <property name="title">No Feeds Yet</property>
+                                <property name="icon_name">rss-symbolic</property>
+                                <property name="description">Add your first feed by clicking on the plus button in the top left corner!</property>
+                              </object>
+                            </child>
                             <style>
                               <class name="navigation-sidebar" />
                             </style>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="AdwStatusPage" id="no_feeds_message">
-                            <property name="vexpand">true</property>
-                            <property name="title">No Feeds Yet</property>
-                            <property name="icon_name">rss-symbolic</property>
-                            <property name="description">Add your first feed by clicking on the plus button in the top left corner!</property>
                           </object>
                         </child>
                       </object>
