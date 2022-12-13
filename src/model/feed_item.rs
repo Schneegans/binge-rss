@@ -11,11 +11,13 @@
 
 use gtk::{glib, prelude::*, subclass::prelude::*};
 use once_cell::sync::Lazy;
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell};
 
 // ---------------------------------------------------------------------------------------
-// A FeedItem is a very simple GObject with two string properties: A title and an URL. It
-// is used to populate the feed item lists in the user interface.
+// A FeedItem is a very simple GObject with two string properties (a title and an URL) and
+// an int64 property. The latter stores a unix timestamp for the time at which the feed
+// was last viewed in the user interface. This object is used to populate the feed item
+// lists in the user interface.
 glib::wrapper! {
   pub struct FeedItem(ObjectSubclass<imp::FeedItem>);
 }
@@ -23,23 +25,29 @@ glib::wrapper! {
 impl FeedItem {
   // ----------------------------------------------------------------- constructor methods
 
-  pub fn new(title: String, url: String) -> Self {
+  pub fn new(title: &String, url: &String, date: i64) -> Self {
     glib::Object::builder()
-      .property("title", &title)
-      .property("url", &url)
+      .property("title", title)
+      .property("url", url)
+      .property("date", date)
       .build()
   }
 
   // ---------------------------------------------------------------------- public methods
 
   // Get the title of the FeedItem. This should be shown to the user.
-  pub fn get_title(&self) -> String {
-    self.imp().title.borrow().clone()
+  pub fn get_title(&self) -> Ref<String> {
+    self.imp().title.borrow()
   }
 
   // Get the URL of the FeedItem. This should be opened when the item is activated.
-  pub fn get_url(&self) -> String {
-    self.imp().url.borrow().clone()
+  pub fn get_url(&self) -> Ref<String> {
+    self.imp().url.borrow()
+  }
+
+  // Returns true if the feed item item was published after the given date.
+  pub fn is_newer(&self, date: i64) -> bool {
+    self.imp().date.borrow().gt(&date)
   }
 }
 
@@ -53,6 +61,7 @@ mod imp {
   pub struct FeedItem {
     pub title: RefCell<String>,
     pub url: RefCell<String>,
+    pub date: RefCell<i64>,
   }
 
   #[glib::object_subclass]
@@ -67,6 +76,7 @@ mod imp {
         vec![
           glib::ParamSpecString::builder("title").build(),
           glib::ParamSpecString::builder("url").build(),
+          glib::ParamSpecInt64::builder("date").build(),
         ]
       });
       PROPERTIES.as_ref()
@@ -88,6 +98,11 @@ mod imp {
               .expect("The value needs to be of type `String`."),
           );
         }
+        "date" => {
+          self
+            .date
+            .replace(value.get().expect("The value needs to be of type `i64`."));
+        }
         _ => unimplemented!(),
       }
     }
@@ -96,6 +111,7 @@ mod imp {
       match pspec.name() {
         "title" => self.title.borrow().clone().to_value(),
         "url" => self.url.borrow().clone().to_value(),
+        "date" => self.date.borrow().clone().to_value(),
         _ => unimplemented!(),
       }
     }

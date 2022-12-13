@@ -37,118 +37,161 @@ SPDX-License-Identifier: MIT
       <object class="AdwToastOverlay" id="toast_overlay">
         <property name="child">
 
-          <object class="AdwLeaflet" id="leaflet">
-            <property name="can_navigate_back">true</property>
-            <property name="can_navigate_forward">true</property>
-            <property name="can_unfold">false</property>
-
-            <!-- Feed List -->
+          <object class="GtkStack" id="main_stack">
+            <property name="transition-type">crossfade</property>
             <child>
-              <object class="GtkBox" id="feed_list_page">
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="AdwHeaderBar">
-                    <binding name="show-end-title-buttons">
-                      <lookup name="folded">leaflet</lookup>
-                    </binding>
+              <object class="GtkStackPage">
+                <property name="name">no_feeds_message</property>
+                <property name="child">
 
-                    <child type="start">
-                      <object class="GtkButton">
-                        <property name="icon-name">list-add-symbolic</property>
-                        <property name="action-name">app.add-feed</property>
-                        <property name="tooltip-text">Add a new feed</property>
-                      </object>
-                    </child>
-
-                    <child type="end">
-                      <object class="GtkMenuButton">
-                        <property name="menu-model">main-menu</property>
-                        <property name="icon-name">open-menu-symbolic</property>
-                      </object>
-                    </child>
-
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow">
-                    <property name="vexpand">true</property>
-                    <property name="width-request">300</property>
-                    <property name="child">
-                      <object class="GtkBox">
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkListBox" id="feed_list">
-                            <property name="vexpand">true</property>
-                            <child type="placeholder">
-                              <object class="AdwStatusPage">
-                                <property name="vexpand">true</property>
-                                <property name="title">No Feeds Yet</property>
-                                <property name="icon_name">rss-symbolic</property>
-                                <property name="description">Add your first feed by clicking on the plus button in the top left corner!</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="navigation-sidebar" />
-                            </style>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="AdwHeaderBar">
+                        <child type="start">
+                          <object class="GtkButton">
+                            <property name="icon-name">list-add-symbolic</property>
+                            <property name="action-name">app.add-feed</property>
+                            <property name="tooltip-text">Add a new feed</property>
                           </object>
                         </child>
+
+                        <child type="end">
+                          <object class="GtkMenuButton">
+                            <property name="menu-model">main-menu</property>
+                            <property name="icon-name">open-menu-symbolic</property>
+                          </object>
+                        </child>
+
                       </object>
-                    </property>
+                    </child>
+                    <child>
+                      <object class="AdwStatusPage">
+                        <property name="vexpand">true</property>
+                        <property name="title">No Feeds Yet</property>
+                        <property name="icon_name">rss-symbolic</property>
+                        <property name="description">Add your first feed by clicking on the plus button in the top left corner!</property>
+                      </object>
+                    </child>
                   </object>
-                </child>
+
+                </property>
               </object>
             </child>
 
-            <!-- Separator -->
             <child>
-              <object class="GtkSeparator"></object>
-            </child>
+              <object class="GtkStackPage">
+                <property name="name">main_leaflet</property>
+                <property name="child">
+                  <object class="AdwLeaflet" id="leaflet">
+                    <property name="can_navigate_back">true</property>
+                    <property name="can_navigate_forward">true</property>
 
-            <!-- Feed Item List -->
-            <child>
-              <object class="GtkBox" id="feed_details_page">
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="AdwHeaderBar">
+                    <!-- Feed List -->
+                    <child>
+                      <object class="GtkBox" id="feed_list_page">
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="AdwHeaderBar">
+                            <binding name="show-end-title-buttons">
+                              <lookup name="folded">leaflet</lookup>
+                            </binding>
 
-                    <child type="title">
-                      <object class="GtkLabel" id="header_label">
-                        <attributes>
-                          <attribute name="weight" value="PANGO_WEIGHT_BOLD" />
-                        </attributes>
+                            <child type="start">
+                              <object class="GtkButton">
+                                <property name="icon-name">list-add-symbolic</property>
+                                <property name="action-name">app.add-feed</property>
+                                <property name="tooltip-text">Add a new feed</property>
+                              </object>
+                            </child>
+
+                            <child type="end">
+                              <object class="GtkMenuButton">
+                                <property name="menu-model">main-menu</property>
+                                <property name="icon-name">open-menu-symbolic</property>
+                              </object>
+                            </child>
+
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <property name="vexpand">true</property>
+                            <property name="width-request">300</property>
+                            <property name="child">
+                              <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkListBox" id="feed_list">
+                                    <property name="vexpand">true</property>
+                                    <style>
+                                      <class name="navigation-sidebar" />
+                                    </style>
+                                  </object>
+                                </child>
+                              </object>
+                            </property>
+                          </object>
+                        </child>
                       </object>
                     </child>
 
-                    <child type="start">
-                      <object class="GtkButton">
-                        <property name="icon-name">go-previous-symbolic</property>
-                        <property name="action-name">app.show-feed-rows</property>
-                        <binding name="visible">
-                          <lookup name="folded">leaflet</lookup>
-                        </binding>
-                      </object>
+                    <!-- Separator -->
+                    <child>
+                      <object class="GtkSeparator"></object>
                     </child>
 
-                    <child type="end">
-                      <object class="GtkButton" id="remove_button">
-                        <property name="icon-name">user-trash-symbolic</property>
-                        <property name="action-name">app.remove-feed</property>
-                        <property name="tooltip-text">Remove this feed</property>
+                    <!-- Feed Item List -->
+                    <child>
+                      <object class="GtkBox" id="feed_details_page">
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="AdwHeaderBar">
+
+                            <child type="title">
+                              <object class="GtkLabel" id="header_label">
+                                <attributes>
+                                  <attribute name="weight" value="PANGO_WEIGHT_BOLD" />
+                                </attributes>
+                              </object>
+                            </child>
+
+                            <child type="start">
+                              <object class="GtkButton">
+                                <property name="icon-name">go-previous-symbolic</property>
+                                <property name="action-name">app.show-feed-rows</property>
+                                <binding name="visible">
+                                  <lookup name="folded">leaflet</lookup>
+                                </binding>
+                              </object>
+                            </child>
+
+                            <child type="end">
+                              <object class="GtkButton" id="remove_button">
+                                <property name="icon-name">user-trash-symbolic</property>
+                                <property name="action-name">app.remove-feed</property>
+                                <property name="tooltip-text">Remove this feed</property>
+                              </object>
+                            </child>
+
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkStack" id="feed_details">
+                            <property name="hexpand">true</property>
+                            <property name="width-request">300</property>
+                          </object>
+                        </child>
                       </object>
                     </child>
 
                   </object>
-                </child>
-                <child>
-                  <object class="GtkStack" id="feed_details">
-                    <property name="hexpand">true</property>
-                    <property name="width-request">300</property>
-                  </object>
-                </child>
+                </property>
               </object>
             </child>
 
           </object>
+
 
         </property>
       </object>

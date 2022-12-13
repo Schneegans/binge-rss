@@ -44,9 +44,8 @@ impl Window {
   pub fn add_feed(&self, feed: &Feed) {
     println!("add {}", feed.get_id());
 
-    // If there are no feeds, the right pane of the main leaflet should not be visible. So
-    // if a feed is added, we can make the leaflet unfoldable again.
-    self.imp().leaflet.set_can_unfold(true);
+    // If we add the first feed, the no-feeds-message must be hidden.
+    self.imp().main_stack.set_visible_child_name("main_leaflet");
 
     // Add a new FeedRow to the list on the left.
     let feed_row = FeedRow::new();
@@ -75,9 +74,10 @@ impl Window {
       .feed_details
       .add_named(&feed_page, Some(&feed.get_id()));
 
-    // Show the FeedPage if the FeedRow is activated.
+    // Show the FeedPage if the FeedRow is activated and update the viewed-timestamp of the feed.
     feed_row.connect_activated(
-      glib::clone!(@weak self as this, @weak feed_page => move |feed_row| {
+      glib::clone!(@weak self as this, @weak feed, @weak feed_page => move |feed_row| {
+        feed.set_viewed();
         this.show_feed_pages();
         this.imp().feed_details.set_visible_child(&feed_page);
         this.imp().header_label.set_label(&feed_row.title());
@@ -106,9 +106,9 @@ impl Window {
     // deleted, we have to select the one above it.
     let mut next_row: Option<gtk::ListBoxRow> = None;
 
-    // We have to check for the existence of the sibling's sibling to learn whether we are
-    // the last row since there is also the no-items-placeholder child.
-    if row.next_sibling().unwrap().next_sibling().is_some() {
+    // We have to check for the existence of a sibling to learn whether we are
+    // the last row.
+    if row.next_sibling().is_some() {
       next_row = row
         .next_sibling()
         .unwrap()
@@ -137,8 +137,10 @@ impl Window {
     if next_row.is_some() {
       next_row.unwrap().activate();
     } else {
-      self.imp().leaflet.set_can_unfold(false);
-      self.show_feed_rows();
+      self
+        .imp()
+        .main_stack
+        .set_visible_child_name("no_feeds_message");
     }
 
     // Go to the sidebar pane if the leaflet is currently folded.
@@ -236,6 +238,8 @@ mod imp {
     #[template_child]
     pub toast_overlay: TemplateChild<adw::ToastOverlay>,
     #[template_child]
+    pub main_stack: TemplateChild<gtk::Stack>,
+    #[template_child]
     pub leaflet: TemplateChild<adw::Leaflet>,
     #[template_child]
     pub feed_list_page: TemplateChild<gtk::Box>,
@@ -254,6 +258,7 @@ mod imp {
     fn default() -> Self {
       Self {
         toast_overlay: TemplateChild::default(),
+        main_stack: TemplateChild::default(),
         leaflet: TemplateChild::default(),
         feed_list_page: TemplateChild::default(),
         feed_details_page: TemplateChild::default(),

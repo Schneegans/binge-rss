@@ -32,9 +32,9 @@ pub struct StoredFeed {
   // The URL to the feed xml.
   pub url: String,
 
-  // The date at which the user last viewed the feed. This is used to compute the number
-  // of new feed items.
-  pub viewed: String,
+  // The unix timestamp in seconds at which the user last viewed the feed. This is used to
+  // compute the number of unread feed items.
+  pub viewed: i64,
 
   // The currently configured filter for this feed.
   #[serde(default, skip_serializing_if = "String::is_empty")]
@@ -67,7 +67,10 @@ impl Default for FeedState {
 // Feed objects store the information on single feeds, like its name, url, or any applied
 // filters. In addition, they allow to download the actual feed content from the internet.
 // You can then access the individual feed items and an icon for the feed via its
-// get_items() and get_icon() methods.
+// get_items() and get_icon() methods. There is also an interface for getting the number
+// of unread items. This is done by comparing the publication timestamps of the feed items
+// to the last time feed.set_viewed() was called. This may not work in all cases but it
+// makes it unnecessary to store all feeds locally.
 glib::wrapper! {
   pub struct Feed(ObjectSubclass<imp::Feed>);
 }
@@ -75,7 +78,7 @@ glib::wrapper! {
 impl Feed {
   // ----------------------------------------------------------------- constructor methods
 
-  pub fn new(title: &String, url: &String, filter: &String, viewed: &String) -> Self {
+  pub fn new(title: &String, url: &String, filter: &String, viewed: i64) -> Self {
     glib::Object::builder()
       .property("title", title)
       .property("url", url)
@@ -170,8 +173,9 @@ impl Feed {
           };
 
           let url = item.links[0].href.clone();
+          let date = if item.published.is_some() {item.published.unwrap().timestamp()} else {0};
 
-          FeedItem::new(title, url)
+          FeedItem::new(&title, &url, date)
         })
         .collect());
 
@@ -187,6 +191,9 @@ impl Feed {
       }
 
       this.set_property("state", FeedState::DownloadSucceeded);
+
+      // The number of unread items may have changed.
+      this.notify("unread");
     }))));
   }
 
@@ -204,11 +211,6 @@ impl Feed {
   // Get the configured filter.
   pub fn get_filter(&self) -> Ref<String> {
     self.imp().filter.borrow()
-  }
-
-  // Get the last time the feed was viewed in the user interface.
-  pub fn get_viewed(&self) -> Ref<String> {
-    self.imp().viewed.borrow()
   }
 
   // Get the automatically assigned unique ID for this feed. All constructed feeds will
@@ -233,6 +235,24 @@ impl Feed {
   pub fn get_icon(&self) -> Ref<Option<gdk::Paintable>> {
     self.imp().icon.borrow()
   }
+
+  // Get the last time the feed was viewed. That is, the last time set_viewed() was
+  // called.
+  pub fn get_viewed(&self) -> Ref<i64> {
+    self.imp().viewed.borrow()
+  }
+
+  // Updates the 'viewed' property to contain the current time.
+  pub fn set_viewed(&self) {
+    self.set_property("viewed", chrono::Utc::now().timestamp());
+    self.notify("unread");
+  }
+
+  // Returns the number of feed items which have been published after the last call to
+  // set_viewed().
+  pub fn get_unread(&self) -> i32 {
+    self.property("unread")
+  }
 }
 
 mod imp {
@@ -250,7 +270,7 @@ mod imp {
     pub title: RefCell<String>,
     pub url: RefCell<String>,
     pub filter: RefCell<String>,
-    pub viewed: RefCell<String>,
+    pub viewed: RefCell<i64>,
     pub state: RefCell<FeedState>,
 
     // These are set by the download() method.
@@ -282,7 +302,8 @@ mod imp {
           glib::ParamSpecString::builder("title").build(),
           glib::ParamSpecString::builder("url").build(),
           glib::ParamSpecString::builder("filter").build(),
-          glib::ParamSpecString::builder("viewed").build(),
+          glib::ParamSpecInt64::builder("viewed").build(),
+          glib::ParamSpecInt::builder("unread").read_only().build(),
           glib::ParamSpecEnum::builder::<FeedState>("state", FeedState::default())
             .build(),
         ]
@@ -324,11 +345,9 @@ mod imp {
           );
         }
         "viewed" => {
-          self.viewed.replace(
-            value
-              .get()
-              .expect("The value needs to be of type `String`."),
-          );
+          self
+            .viewed
+            .replace(value.get().expect("The value needs to be of type `i64`."));
         }
         "state" => {
           self.state.replace(
@@ -348,6 +367,15 @@ mod imp {
         "filter" => self.filter.borrow().clone().to_value(),
         "viewed" => self.viewed.borrow().clone().to_value(),
         "state" => self.state.borrow().clone().to_value(),
+        "unread" => (self
+          .obj()
+          .imp()
+          .items
+          .borrow()
+          .iter()
+          .filter(|i| i.is_newer(*self.obj().get_viewed()))
+          .count() as i32)
+          .to_value(),
         _ => unimplemented!(),
       }
     }

@@ -59,7 +59,6 @@ impl FeedRow {
 
         this.imp().spinner.set_visible(state == FeedState::DownloadStarted);
         this.imp().avatar.set_visible(state != FeedState::DownloadStarted);
-        this.imp().badge.set_visible(state == FeedState::DownloadSucceeded);
         this.imp().avatar.set_custom_image(feed.get_icon().as_ref());
         this.imp().avatar.set_icon_name(Some("network-no-route-symbolic"));
         this.set_subtitle("");
@@ -71,6 +70,16 @@ impl FeedRow {
         } else if state == FeedState::DownloadSucceeded {
           this.imp().avatar.set_icon_name(Some("rss-symbolic"));
         }
+      }),
+    );
+
+    // Show the number of unread feed items in a badge.
+    feed.connect_notify_local(
+      Some("unread"),
+      glib::clone!(@weak self as this => move |feed, _| {
+        let count = feed.get_unread();
+        this.imp().badge.set_visible(count > 0);
+        this.imp().badge.set_label(&feed.get_unread().to_string());
       }),
     );
   }

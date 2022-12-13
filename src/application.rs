@@ -91,7 +91,8 @@ impl Application {
         glib::clone!(@weak self as this, @weak window => move |_, _| {
 
           // First, create the new feed.
-          let feed = Feed::new(&"New Feed".into(), &"".into(), &"".into(), &"".into());
+          let feed = Feed::new(&"New Feed".into(), &"".into(), &"".into(),
+            chrono::Utc::now().timestamp());
 
           // Then add it to the user interface.
           window.add_feed(&feed);
@@ -203,7 +204,7 @@ impl Application {
     self.imp().feeds.replace(
       stored_feeds
         .iter()
-        .map(|f| Feed::new(&f.title, &f.url, &f.filter, &f.viewed))
+        .map(|f| Feed::new(&f.title, &f.url, &f.filter, f.viewed))
         .collect(),
     );
 
