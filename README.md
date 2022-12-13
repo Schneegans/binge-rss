@@ -29,16 +29,23 @@ Expect bugs!
 In its current state, it is not yet very useful.
 However, once this list is completed, I'll publish the first release:
 
-- [x] Configure new feeds.
+- [x] Allow adding new feeds.
 - [x] Make the name and URL of the feeds configurable.
 - [x] Allow deletion of feeds.
 - [x] Allow undo deletion of feeds.
 - [x] Permanently store configured feeds.
+- [x] Automatically sort the feeds alphabetically.
 - [x] Allow filtering of feed items by their name.
 - [x] Show the number of new feed items since the last start of the app.
 - [ ] Automatically refresh feeds at periodic intervals.
 - [ ] Keep the app running in the background even if the window gets closed.
 - [ ] Show notifications whenever a new feed item is published.
+
+Things which could be done after the initial release:
+
+- [ ] More advanced filtering options.
+- [ ] Make the application translatable.
+- [ ] Improve performance.
 
 ## ⬇️ Local Installation
 
