@@ -152,13 +152,15 @@ impl Application {
               // previously removed feeds.
               let i = this.imp().removed_feeds.borrow().iter().position(|f| {
                 f.get_id().eq(&String::from_variant(id.unwrap()).unwrap())
-              }).unwrap();
+              });
 
               // Then remove the feed from the list of removed feeds, re-add it to the
               // user interface and store it in the real feed list.
-              let feed = this.imp().removed_feeds.borrow_mut().remove(i);
-              window.add_feed(&feed);
-              this.imp().feeds.borrow_mut().push(feed);
+              if i.is_some() {
+                let feed = this.imp().removed_feeds.borrow_mut().remove(i.unwrap());
+                window.add_feed(&feed);
+                this.imp().feeds.borrow_mut().push(feed);
+              }
             }
         }),
       );
